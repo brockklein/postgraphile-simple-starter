@@ -1,0 +1,4 @@
+migrations/committed/*.sql text eol=lf
+migrations/current.sql text eol=lf
+
+# Per recommendation here: https://github.com/graphile/migrate#windows
