@@ -1,0 +1,480 @@
+"""The root query type which gives access points into the data universe."""
+type Query implements Node {
+  """
+  Exposes the root query type nested one level down. This is helpful for Relay 1
+  which can only query top level fields if they are in a particular form.
+  """
+  query: Query!
+
+  """
+  The root query type must be a `Node` to work well with Relay 1 mutations. This just resolves to `query`.
+  """
+  nodeId: ID!
+
+  """Fetches an object given its globally unique `ID`."""
+  node(
+    """The globally unique `ID`."""
+    nodeId: ID!
+  ): Node
+
+  """Reads and enables pagination through a set of `UserProfile`."""
+  allUserProfiles(
+    """Only read the first `n` values of the set."""
+    first: Int
+
+    """Only read the last `n` values of the set."""
+    last: Int
+
+    """
+    Skip the first `n` values from our `after` cursor, an alternative to cursor
+    based pagination. May not be used with `last`.
+    """
+    offset: Int
+
+    """Read all values in the set before (above) this cursor."""
+    before: Cursor
+
+    """Read all values in the set after (below) this cursor."""
+    after: Cursor
+
+    """The method to use when ordering `UserProfile`."""
+    orderBy: [UserProfilesOrderBy!] = [PRIMARY_KEY_ASC]
+
+    """
+    A condition to be used in determining which values should be returned by the collection.
+    """
+    condition: UserProfileCondition
+  ): UserProfilesConnection
+  userProfileByUserId(userId: UUID!): UserProfile
+
+  """Gets the user who was identified by our JWT."""
+  currentUser: UserProfile
+
+  """Reads a single `UserProfile` using its globally unique `ID`."""
+  userProfile(
+    """
+    The globally unique `ID` to be used in selecting a single `UserProfile`.
+    """
+    nodeId: ID!
+  ): UserProfile
+}
+
+"""An object with a globally unique `ID`."""
+interface Node {
+  """
+  A globally unique identifier. Can be used in various places throughout the system to identify this single value.
+  """
+  nodeId: ID!
+}
+
+"""A connection to a list of `UserProfile` values."""
+type UserProfilesConnection {
+  """A list of `UserProfile` objects."""
+  nodes: [UserProfile!]!
+
+  """
+  A list of edges which contains the `UserProfile` and cursor to aid in pagination.
+  """
+  edges: [UserProfilesEdge!]!
+
+  """Information to aid in pagination."""
+  pageInfo: PageInfo!
+
+  """The count of *all* `UserProfile` you could get from the connection."""
+  totalCount: Int!
+}
+
+"""
+`user_profile` is a user's publicly visible demographic information. <br><br>
+
+A profile maintains a one-to-one connection with a user's `user_account` via the `user_id` foreign key. This is used as the primary key on this table to enforce the one-to-one relationship and not allow a one-to-many (more than one `user_profile` for a `user_account`).
+
+"""
+type UserProfile implements Node {
+  """
+  A globally unique identifier. Can be used in various places throughout the system to identify this single value.
+  """
+  nodeId: ID!
+
+  """
+  A foreign key reference to the user's `user_id` in their `user_account` record.
+  """
+  userId: UUID!
+
+  """When the user's profile was created."""
+  createdAt: Datetime!
+
+  """The last time the user's profile was updated."""
+  updatedAt: Datetime!
+
+  """The user's first name."""
+  firstName: String
+
+  """The user's last name."""
+  lastName: String
+
+  """
+  A user's full name which is a concatenation of their first and last name.
+  """
+  fullName: String
+}
+
+"""
+A universally unique identifier as defined by [RFC 4122](https://tools.ietf.org/html/rfc4122).
+"""
+scalar UUID
+
+"""
+A point in time as described by the [ISO
+8601](https://en.wikipedia.org/wiki/ISO_8601) standard. May or may not include a timezone.
+"""
+scalar Datetime
+
+"""A `UserProfile` edge in the connection."""
+type UserProfilesEdge {
+  """A cursor for use in pagination."""
+  cursor: Cursor
+
+  """The `UserProfile` at the end of the edge."""
+  node: UserProfile!
+}
+
+"""A location in a connection that can be used for resuming pagination."""
+scalar Cursor
+
+"""Information about pagination in a connection."""
+type PageInfo {
+  """When paginating forwards, are there more items?"""
+  hasNextPage: Boolean!
+
+  """When paginating backwards, are there more items?"""
+  hasPreviousPage: Boolean!
+
+  """When paginating backwards, the cursor to continue."""
+  startCursor: Cursor
+
+  """When paginating forwards, the cursor to continue."""
+  endCursor: Cursor
+}
+
+"""Methods to use when ordering `UserProfile`."""
+enum UserProfilesOrderBy {
+  NATURAL
+  USER_ID_ASC
+  USER_ID_DESC
+  PRIMARY_KEY_ASC
+  PRIMARY_KEY_DESC
+}
+
+"""
+A condition to be used against `UserProfile` object types. All fields are tested
+for equality and combined with a logical ‘and.’
+"""
+input UserProfileCondition {
+  """Checks for equality with the object’s `userId` field."""
+  userId: UUID
+}
+
+"""
+The root mutation type which contains root level fields which mutate data.
+"""
+type Mutation {
+  """
+  Updates a single `UserProfile` using its globally unique id and a patch.
+  """
+  updateUserProfile(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: UpdateUserProfileInput!
+  ): UpdateUserProfilePayload
+
+  """Updates a single `UserProfile` using a unique key and a patch."""
+  updateUserProfileByUserId(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: UpdateUserProfileByUserIdInput!
+  ): UpdateUserProfilePayload
+
+  """Deletes a single `UserProfile` using its globally unique id."""
+  deleteUserProfile(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: DeleteUserProfileInput!
+  ): DeleteUserProfilePayload
+
+  """Deletes a single `UserProfile` using a unique key."""
+  deleteUserProfileByUserId(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: DeleteUserProfileByUserIdInput!
+  ): DeleteUserProfilePayload
+
+  """
+  Creates a JWT token that will securely identify a user and give them certain permissions. This token expires in 2 days.
+  """
+  authenticate(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: AuthenticateInput!
+  ): AuthenticatePayload
+
+  """
+  Registers a single user creating their profile (user_profile) and an account (user_account).
+  """
+  registerPerson(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: RegisterPersonInput!
+  ): RegisterPersonPayload
+
+  """
+  Registers a single user creating their profile (user_profile) and an account (user_account).
+  """
+  registerUser(
+    """
+    The exclusive input argument for this mutation. An object type, make sure to see documentation for this object’s fields.
+    """
+    input: RegisterUserInput!
+  ): RegisterUserPayload
+}
+
+"""The output of our update `UserProfile` mutation."""
+type UpdateUserProfilePayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """The `UserProfile` that was updated by this mutation."""
+  userProfile: UserProfile
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+
+  """An edge for our `UserProfile`. May be used by Relay 1."""
+  userProfileEdge(
+    """The method to use when ordering `UserProfile`."""
+    orderBy: [UserProfilesOrderBy!] = [PRIMARY_KEY_ASC]
+  ): UserProfilesEdge
+}
+
+"""All input for the `updateUserProfile` mutation."""
+input UpdateUserProfileInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+
+  """
+  The globally unique `ID` which will identify a single `UserProfile` to be updated.
+  """
+  nodeId: ID!
+
+  """
+  An object where the defined keys will be set on the `UserProfile` being updated.
+  """
+  userProfilePatch: UserProfilePatch!
+}
+
+"""
+Represents an update to a `UserProfile`. Fields that are set will be updated.
+"""
+input UserProfilePatch {
+  """
+  A foreign key reference to the user's `user_id` in their `user_account` record.
+  """
+  userId: UUID
+
+  """When the user's profile was created."""
+  createdAt: Datetime
+
+  """The last time the user's profile was updated."""
+  updatedAt: Datetime
+
+  """The user's first name."""
+  firstName: String
+
+  """The user's last name."""
+  lastName: String
+}
+
+"""All input for the `updateUserProfileByUserId` mutation."""
+input UpdateUserProfileByUserIdInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+
+  """
+  An object where the defined keys will be set on the `UserProfile` being updated.
+  """
+  userProfilePatch: UserProfilePatch!
+
+  """
+  A foreign key reference to the user's `user_id` in their `user_account` record.
+  """
+  userId: UUID!
+}
+
+"""The output of our delete `UserProfile` mutation."""
+type DeleteUserProfilePayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+
+  """The `UserProfile` that was deleted by this mutation."""
+  userProfile: UserProfile
+  deletedUserProfileId: ID
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+
+  """An edge for our `UserProfile`. May be used by Relay 1."""
+  userProfileEdge(
+    """The method to use when ordering `UserProfile`."""
+    orderBy: [UserProfilesOrderBy!] = [PRIMARY_KEY_ASC]
+  ): UserProfilesEdge
+}
+
+"""All input for the `deleteUserProfile` mutation."""
+input DeleteUserProfileInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+
+  """
+  The globally unique `ID` which will identify a single `UserProfile` to be deleted.
+  """
+  nodeId: ID!
+}
+
+"""All input for the `deleteUserProfileByUserId` mutation."""
+input DeleteUserProfileByUserIdInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+
+  """
+  A foreign key reference to the user's `user_id` in their `user_account` record.
+  """
+  userId: UUID!
+}
+
+"""The output of our `authenticate` mutation."""
+type AuthenticatePayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+  jwtToken: JwtToken
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+}
+
+"""
+A JSON Web Token defined by [RFC 7519](https://tools.ietf.org/html/rfc7519)
+which securely represents claims between two parties.
+"""
+scalar JwtToken
+
+"""All input for the `authenticate` mutation."""
+input AuthenticateInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+  email: String!
+  password: String!
+}
+
+"""The output of our `registerPerson` mutation."""
+type RegisterPersonPayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+  userProfile: UserProfile
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+
+  """An edge for our `UserProfile`. May be used by Relay 1."""
+  userProfileEdge(
+    """The method to use when ordering `UserProfile`."""
+    orderBy: [UserProfilesOrderBy!] = [PRIMARY_KEY_ASC]
+  ): UserProfilesEdge
+}
+
+"""All input for the `registerPerson` mutation."""
+input RegisterPersonInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+  firstName: String!
+  lastName: String!
+  email: String!
+  password: String!
+}
+
+"""The output of our `registerUser` mutation."""
+type RegisterUserPayload {
+  """
+  The exact same `clientMutationId` that was provided in the mutation input,
+  unchanged and unused. May be used by a client to track mutations.
+  """
+  clientMutationId: String
+  userProfile: UserProfile
+
+  """
+  Our root query field type. Allows us to run any query from our mutation payload.
+  """
+  query: Query
+
+  """An edge for our `UserProfile`. May be used by Relay 1."""
+  userProfileEdge(
+    """The method to use when ordering `UserProfile`."""
+    orderBy: [UserProfilesOrderBy!] = [PRIMARY_KEY_ASC]
+  ): UserProfilesEdge
+}
+
+"""All input for the `registerUser` mutation."""
+input RegisterUserInput {
+  """
+  An arbitrary string value with no semantic meaning. Will be included in the
+  payload verbatim. May be used to track mutations by the client.
+  """
+  clientMutationId: String
+  firstName: String!
+  lastName: String!
+  email: String!
+  password: String!
+}

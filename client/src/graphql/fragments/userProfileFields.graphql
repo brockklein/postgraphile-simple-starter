@@ -1,0 +1,7 @@
+fragment UserProfileFields on UserProfile {
+  createdAt
+  firstName
+  lastName
+  updatedAt
+  userId
+}

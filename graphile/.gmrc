@@ -16,7 +16,7 @@
    *
    * RECOMMENDATION: use `DATABASE_URL` envvar instead.
    */
-  "connectionString": "postgres://app_postgraphile:zqDHRFx5fEYMbkq@localhost/eventcast",
+  "connectionString": "postgres://postgres:postgres@localhost/eventcast",
 
   /*
    * shadowConnectionString: like connectionString, but this is used for the

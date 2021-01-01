@@ -1,0 +1,15 @@
+#import "./fragments/userProfileFields.graphql"
+
+
+mutation Authenticate($email: String!, $password: String!) {
+  authenticate(input: {email: $email, password: $password}) {
+    clientMutationId
+    jwtToken
+    query {
+      nodeId
+      currentUser {
+        ...UserProfileFields
+      }
+    }
+  }
+}

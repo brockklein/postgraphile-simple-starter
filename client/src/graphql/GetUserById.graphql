@@ -1,0 +1,8 @@
+#import "./fragments/userProfileFields.graphql"
+
+
+query findUserProfile($userId: UUID!) {
+  userProfileByUserId(userId: $userId) {
+    ...UserProfileFields
+  }
+}
