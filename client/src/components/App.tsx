@@ -1,19 +1,24 @@
-import { ApolloProvider } from '@apollo/client';
-import React from 'react';
-import { apolloClient } from '../apollo';
 import { AlertsProvider } from '../hooks/use-alert';
 import { AuthProvider } from '../hooks/use-auth';
 import { LoadingProvider } from '../hooks/use-loading';
+import { ApolloProvider } from './apollo-provider';
 import { ComposeProviders } from './compose-providers';
 import { Routes } from './routes';
+import { SnackbarProvider } from './snackbar-provider';
 
 export const App = () => {
   return (
-    <ApolloProvider client={apolloClient}>
-      <ComposeProviders providers={[ApolloProvider, LoadingProvider, AlertsProvider, AuthProvider]}>
-        <Routes />
-      </ComposeProviders>
-    </ApolloProvider>
+    <ComposeProviders
+      providers={[
+        LoadingProvider,
+        SnackbarProvider,
+        AlertsProvider,
+        ApolloProvider,
+        AuthProvider
+      ]}
+    >
+      <Routes />
+    </ComposeProviders>
   )
 }
 

@@ -1,8 +1,8 @@
 import { QueryResult } from "@apollo/client"
 import { useEffect, useState } from "react"
 import { useLoading } from "./use-loading"
-import { usePrevious } from "react-use"
-import { IAlertWithKey, useAlert } from "./use-alert"
+import { useSnackbar } from "notistack"
+import { useAlert } from "./use-alert"
 
 
 /**
@@ -18,25 +18,14 @@ interface IUseApolloQueryHookArgs<T> {
 }
 export const useApolloQueryHook = <T,>({ query, loadingUi }: IUseApolloQueryHookArgs<T>) => {
     const [startLoading, stopLoading] = useLoading()
-    const { addAlert, updateAlert } = useAlert()
 
-    const [alert, setAlert] = useState<IAlertWithKey>()
+    const { enqueueSnackbar, closeSnackbar } = useSnackbar()
+    const [snackbarKey, setSnackbarKey] = useState<string>()
 
-    if (loadingUi === 'alert') {
-        setAlert(
-            addAlert({
-                title: 'Loading...',
-                type: 'info',
-                banner: true,
-                persist: true,
-                closable: false
-            })
-        )
-    }
+    const { addAlert } = useAlert()
 
     const { loading, error } = query
 
-    const previousLoading = usePrevious(loading)
     useEffect(() => {
         switch (loadingUi) {
             case 'overlay':
@@ -44,15 +33,8 @@ export const useApolloQueryHook = <T,>({ query, loadingUi }: IUseApolloQueryHook
                 if (!loading) stopLoading()
                 break
             case 'alert':
-                if (!loading && previousLoading && alert && !error) {
-                    updateAlert({
-                        ...alert,
-                        title: 'Success!',
-                        type: 'success',
-                        persist: false,
-                        closable: true,
-                    })
-                }
+                if (loading) setSnackbarKey(enqueueSnackbar('Loading...', { variant: 'info', persist: true }).toString())
+                if (!loading && snackbarKey) closeSnackbar(snackbarKey)
                 break
             case 'none':
                 break
@@ -63,24 +45,16 @@ export const useApolloQueryHook = <T,>({ query, loadingUi }: IUseApolloQueryHook
 
     useEffect(() => {
         if (error) {
-            if (alert) {
-                updateAlert({
-                    ...alert,
-                    title: 'Success!',
-                    type: 'success',
-                    persist: false,
-                    closable: true,
-                })
-            } else {
-                const newAlert = addAlert({
-                    type: 'error',
-                    title: error.name,
-                    body: error.message,
-                    persist: true,
-                    closable: true,
-                })
-                setAlert(newAlert)
-            }
+            if (snackbarKey) closeSnackbar(snackbarKey)
+            addAlert({
+                title: `Error: ${error.name}`,
+                body: (
+                    <div>
+                        
+                    </div>
+                ),
+                type: 'error'
+            })
         }
 
         // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -1,10 +1,21 @@
+import { useEffect } from 'react'
+import { useAlert } from '../hooks/use-alert'
 import { useLoading } from '../hooks/use-loading'
 
 export const Login = () => {
 
-    return (
-       <div>
+    const { addAlert } = useAlert()
 
-       </div>
+    useEffect(() => {
+        addAlert({
+            title: 'New Alert!',
+            body: 'With a body message!',
+        })
+    }, [])
+
+    return (
+        <div>
+
+        </div>
     )
 }

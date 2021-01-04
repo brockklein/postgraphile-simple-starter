@@ -1,45 +1,37 @@
-import React, { useState, useContext, createContext } from 'react'
+import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from '@material-ui/core'
+import { useState, useContext, createContext, Fragment, ReactNode, useEffect } from 'react'
 import { v4 as uuid } from 'uuid'
 
-type AntAlertTypes = 'success' | 'info' | 'warning' | 'error'
-interface IAlert {
-    type: AntAlertTypes
+type AlertType = 'success' | 'info' | 'warning' | 'error'
+interface INewAlert {
+    type?: AlertType
     title: string
-    body?: string
-    banner?: boolean
+    body: ReactNode
     closable?: boolean
-    hideIcon?: boolean
-    persist?: boolean
     afterClose?: () => void
 }
 
-export interface IAlertWithKey extends IAlert {
+export interface IAlert extends INewAlert {
+    type: AlertType
     key: string
 }
 
 const useProvideAlerts = (): IAlertContext => {
 
-    const [alerts, setAlerts] = useState<IAlertWithKey[]>([])
+    const [alerts, setAlerts] = useState<IAlert[]>([])
 
-    const removeAlert = (alert: IAlertWithKey) => setAlerts([...alerts.filter(o => o.key === alert.key)])
+    const removeAlert = (alert: IAlert) => setAlerts([...alerts.filter(o => o.key === alert.key)])
 
-    const addAlert = (alert: IAlert) => {
+    const addAlert = (alert: INewAlert) => {
         // Add a key
-        const newAlert = { ...alert, key: uuid() }
+        const newAlert: IAlert = { ...alert, key: uuid(), type: alert.type || 'info' }
 
         // Remove the alert from state after it's closed
         const afterClose = () => {
-            if (newAlert.afterClose) newAlert.afterClose()
+            // if (newAlert.afterClose) newAlert.afterClose()
             removeAlert(newAlert)
         }
         newAlert.afterClose = afterClose
-
-        // If not explicitly set to be persistent, close after 1500ms
-        if (!alert.persist) {
-            setTimeout(() => {
-                removeAlert(newAlert)
-            }, 1500);
-        }
 
         // Add the new alert to state
         setAlerts([...alerts, newAlert])
@@ -48,34 +40,79 @@ const useProvideAlerts = (): IAlertContext => {
         return newAlert
     }
 
-    const updateAlert = (alert: IAlertWithKey) => {
+    const updateAlert = (alert: IAlert) => {
         throw new Error('NOT IMPLEMENtED')
     }
 
     return {
         alerts,
         addAlert,
-        updateAlert
+        updateAlert,
+        removeAlert
     }
 }
 
 interface IAlertContext {
     alerts: IAlert[]
-    addAlert: (alert: IAlert) => IAlertWithKey
-    updateAlert: (alert: IAlertWithKey) => void
+    addAlert: (alert: INewAlert) => IAlert
+    updateAlert: (alert: IAlert) => void
+    removeAlert: (alert: IAlert) => void
 }
 const AlertContext = createContext<IAlertContext | null>(null)
 
 export const AlertsProvider: React.FC = ({ children }) => {
     const alertControls = useProvideAlerts()
+    const { alerts, removeAlert } = alertControls
+
+    const titleId = uuid()
+    const descriptionId = uuid()
+
+    const [currentAlert, setCurrentAlert] = useState<IAlert>()
+
+    const getNextAlert = () => alerts.length > 0 ? alerts[0] : undefined
+
+    // Advance which alert is being shown in the dialog. Close the alert dialog if currently showing the last alert.
+    const nextAlert = () => {
+        if (currentAlert) {
+            if (currentAlert.afterClose) currentAlert.afterClose()
+            removeAlert(currentAlert)
+        }
+        const asdlkfj = getNextAlert()
+        console.log('the next alert!', asdlkfj)
+        setCurrentAlert(asdlkfj)
+    }
+
+    useEffect(() => {
+        console.log('alerts', alerts)
+        if (!currentAlert && alerts.length > 0) nextAlert()
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [alerts])
 
     return (
         <AlertContext.Provider value={alertControls}>
-            {alertControls.alerts.map(alert => (
-                <></>
-                // <Alert {...alert} message={alert.title} description={alert.body} showIcon={!alert.hideIcon} />
-            ))}
-            {children}
+            <Fragment>
+                {currentAlert?.title}
+                <Dialog
+                    open={!!currentAlert}
+                    aria-labelledby={titleId}
+                    aria-describedby={descriptionId}
+                    disableBackdropClick={!!getNextAlert() || !currentAlert?.closable}
+                >
+                    <DialogTitle id={titleId}>{currentAlert?.title}</DialogTitle>
+                    <DialogContent dividers>
+                        <DialogContentText id={descriptionId}>
+                            {currentAlert?.body}
+                        </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => nextAlert()} color='primary' autoFocus>
+                            OK
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+                {children}
+            </Fragment>
         </AlertContext.Provider>
     )
 }
