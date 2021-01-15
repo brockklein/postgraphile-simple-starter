@@ -6,6 +6,7 @@ import clsx from 'clsx'
 import logo from '../images/logo.svg'
 import { usePaddedBorderStyles } from '../styles'
 import { useAuth } from '../hooks'
+import { Link } from 'react-router-dom'
 
 export const Signup = () => {
     const classes = usePaddedBorderStyles()
@@ -74,9 +75,12 @@ export const Signup = () => {
                         </Grid>
                         <Grid item>
                             <Box marginX={1} marginY={2} display='flex' justifyContent='space-between'>
-                                <Button href='/login' variant='text' color='primary' disableElevation>
-                                    Already have an account?
-                                </Button>
+                                <Link to='/login'>
+                                    <Button variant='text' color='primary' disableElevation>
+                                        Already have an account?
+                                    </Button>
+                                </Link>
+
                                 <Button type='submit' style={{ minWidth: 100 }} variant='contained' color='primary' disableElevation>
                                     Next
                                 </Button>

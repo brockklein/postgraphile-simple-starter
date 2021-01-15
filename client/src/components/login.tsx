@@ -1,4 +1,4 @@
-import { Button, Grid, Box, Typography, Link, } from '@material-ui/core'
+import { Button, Grid, Box, Typography, } from '@material-ui/core'
 import { useSnackbar } from 'notistack'
 import { useLoadingOverlay } from '../hooks'
 import { Form, Formik } from 'formik'
@@ -7,9 +7,9 @@ import { PasswordField, TextInput } from './forms'
 import clsx from 'clsx'
 import logo from '../images/logo.svg'
 import { useAuthenticateMutation } from '../graphql/autogenerate/hooks'
-import { useEffect, useMemo } from 'react'
+import { useEffect } from 'react'
 import { usePaddedBorderStyles } from '../styles'
-
+import { Link } from 'react-router-dom'
 
 export const Login = () => {
 
@@ -52,7 +52,7 @@ export const Login = () => {
                     <Form style={{ width: '100%' }}>
                         <Grid item container justify='center' alignContent='center' direction='column'>
                             <Box marginBottom={2}>
-                                <Link href='/signup'><img src={logo} alt='Legit Apps logo' style={{ maxWidth: 75 }} /></Link>
+                                <Link to='/signup'><img src={logo} alt='Legit Apps logo' style={{ maxWidth: 75 }} /></Link>
                             </Box>
                             <Box marginBottom={4}>
                                 <Typography variant='h5' align='center'>Sign in</Typography>

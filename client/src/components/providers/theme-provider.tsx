@@ -5,7 +5,7 @@ import { FunctionComponent } from 'react';
 const theme = createMuiTheme({
     typography: {
         button: {
-            textTransform: 'none'
+            textTransform: 'none',
         },
     },
     breakpoints: {
