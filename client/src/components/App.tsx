@@ -1,24 +1,25 @@
-import { AlertsProvider } from '../hooks/use-alert';
-import { AuthProvider } from '../hooks/use-auth';
-import { LoadingProvider } from '../hooks/use-loading';
-import { ApolloProvider } from './apollo-provider';
-import { ComposeProviders } from './compose-providers';
-import { Routes } from './routes';
-import { SnackbarProvider } from './snackbar-provider';
+import { Routes } from './routes'
+import { Container } from '@material-ui/core'
+import React from 'react'
+import { ComposeProviders, SnackbarProvider, ApolloProvider, ThemeProvider, AppStateProvider, AlertsProvider, AuthProvider, LoadingProvider } from './providers'
 
 export const App = () => {
   return (
-    <ComposeProviders
-      providers={[
-        LoadingProvider,
-        SnackbarProvider,
-        AlertsProvider,
-        ApolloProvider,
-        AuthProvider
-      ]}
-    >
-      <Routes />
-    </ComposeProviders>
+    <Container style={{ display: 'flex', justifyContent: 'center', alignContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+      <ComposeProviders
+        providers={[
+          AppStateProvider,
+          ThemeProvider,
+          LoadingProvider,
+          SnackbarProvider,
+          AlertsProvider,
+          ApolloProvider,
+          AuthProvider
+        ]}
+      >
+        <Routes />
+      </ComposeProviders>
+    </Container>
   )
 }
 

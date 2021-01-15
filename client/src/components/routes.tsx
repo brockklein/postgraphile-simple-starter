@@ -1,7 +1,8 @@
 import React, { Fragment, useEffect } from "react";
 import { Switch, Route, useHistory, BrowserRouter } from "react-router-dom";
-import { useAuth } from "../hooks/use-auth";
+import { useAppState } from "../hooks";
 import { Login } from "./login";
+import { Signup } from "./signup";
 
 export const Routes = () => {
   return (
@@ -9,12 +10,12 @@ export const Routes = () => {
       <Switch>
         <Route path="/login"><Login /></Route>
 
-        <Route path="/signup">
-          signup!
-        </Route>
+        <Route path="/signup"><Signup /></Route>
 
         <IsAuthenticated>
-          Private!!
+          <Route path='/dashboard'>
+            Dashboard
+          </Route>
         </IsAuthenticated>
       </Switch>
     </BrowserRouter>
@@ -22,16 +23,22 @@ export const Routes = () => {
 }
 
 const IsAuthenticated: React.FC = ({ children }) => {
-  const auth = useAuth()
+  const { state } = useAppState()
   const history = useHistory()
 
   useEffect(() => {
-    if (!auth.user?.currentUser) history.push('/login')
+    console.log('this be the user', state.user)
+
+    if (!state.user?.currentUser) {
+      history.push('/login')
+    } else {
+      history.push('/dashboard')
+    }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [auth.user])
+  }, [state.user])
 
-  if (!auth.user?.currentUser) return null
+  if (!state.user?.currentUser) return null
 
   return (
     <Fragment>

@@ -1,6 +1,6 @@
 import { QueryResult } from "@apollo/client"
 import { useEffect, useState } from "react"
-import { useLoading } from "./use-loading"
+import { useLoadingOverlay } from "./use-loading"
 import { useSnackbar } from "notistack"
 import { useAlert } from "./use-alert"
 
@@ -17,7 +17,7 @@ interface IUseApolloQueryHookArgs<T> {
     loadingUi?: 'alert' | 'overlay' | 'none'
 }
 export const useApolloQueryHook = <T,>({ query, loadingUi }: IUseApolloQueryHookArgs<T>) => {
-    const [startLoading, stopLoading] = useLoading()
+    const [startLoading, stopLoading] = useLoadingOverlay()
 
     const { enqueueSnackbar, closeSnackbar } = useSnackbar()
     const [snackbarKey, setSnackbarKey] = useState<string>()
@@ -50,7 +50,7 @@ export const useApolloQueryHook = <T,>({ query, loadingUi }: IUseApolloQueryHook
                 title: `Error: ${error.name}`,
                 body: (
                     <div>
-                        
+
                     </div>
                 ),
                 type: 'error'

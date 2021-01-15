@@ -1,4 +1,4 @@
-schema: "../schema.graphql"
+schema: "../graphile/schema.graphql"
 overwrite: true
 generates:
   # Get schemas from server

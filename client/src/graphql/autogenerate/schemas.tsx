@@ -16,8 +16,6 @@ export type Scalars = {
    * 8601](https://en.wikipedia.org/wiki/ISO_8601) standard. May or may not include a timezone.
    */
   Datetime: any;
-  /** A location in a connection that can be used for resuming pagination. */
-  Cursor: any;
   /**
    * A JSON Web Token defined by [RFC 7519](https://tools.ietf.org/html/rfc7519)
    * which securely represents claims between two parties.
@@ -37,13 +35,8 @@ export type Query = Node & {
   nodeId: Scalars['ID'];
   /** Fetches an object given its globally unique `ID`. */
   node?: Maybe<Node>;
-  /** Reads and enables pagination through a set of `UserProfile`. */
-  allUserProfiles?: Maybe<UserProfilesConnection>;
-  userProfileByUserId?: Maybe<UserProfile>;
   /** Gets the user who was identified by our JWT. */
   currentUser?: Maybe<UserProfile>;
-  /** Reads a single `UserProfile` using its globally unique `ID`. */
-  userProfile?: Maybe<UserProfile>;
 };
 
 
@@ -52,47 +45,10 @@ export type QueryNodeArgs = {
   nodeId: Scalars['ID'];
 };
 
-
-/** The root query type which gives access points into the data universe. */
-export type QueryAllUserProfilesArgs = {
-  first?: Maybe<Scalars['Int']>;
-  last?: Maybe<Scalars['Int']>;
-  offset?: Maybe<Scalars['Int']>;
-  before?: Maybe<Scalars['Cursor']>;
-  after?: Maybe<Scalars['Cursor']>;
-  orderBy?: Maybe<Array<UserProfilesOrderBy>>;
-  condition?: Maybe<UserProfileCondition>;
-};
-
-
-/** The root query type which gives access points into the data universe. */
-export type QueryUserProfileByUserIdArgs = {
-  userId: Scalars['UUID'];
-};
-
-
-/** The root query type which gives access points into the data universe. */
-export type QueryUserProfileArgs = {
-  nodeId: Scalars['ID'];
-};
-
 /** An object with a globally unique `ID`. */
 export type Node = {
   /** A globally unique identifier. Can be used in various places throughout the system to identify this single value. */
   nodeId: Scalars['ID'];
-};
-
-/** A connection to a list of `UserProfile` values. */
-export type UserProfilesConnection = {
-  __typename?: 'UserProfilesConnection';
-  /** A list of `UserProfile` objects. */
-  nodes: Array<UserProfile>;
-  /** A list of edges which contains the `UserProfile` and cursor to aid in pagination. */
-  edges: Array<UserProfilesEdge>;
-  /** Information to aid in pagination. */
-  pageInfo: PageInfo;
-  /** The count of *all* `UserProfile` you could get from the connection. */
-  totalCount: Scalars['Int'];
 };
 
 /**
@@ -109,7 +65,7 @@ export type UserProfile = Node & {
   /** When the user's profile was created. */
   createdAt: Scalars['Datetime'];
   /** The last time the user's profile was updated. */
-  updatedAt: Scalars['Datetime'];
+  updatedAt?: Maybe<Scalars['Datetime']>;
   /** The user's first name. */
   firstName?: Maybe<Scalars['String']>;
   /** The user's last name. */
@@ -119,47 +75,6 @@ export type UserProfile = Node & {
 };
 
 
-
-/** A `UserProfile` edge in the connection. */
-export type UserProfilesEdge = {
-  __typename?: 'UserProfilesEdge';
-  /** A cursor for use in pagination. */
-  cursor?: Maybe<Scalars['Cursor']>;
-  /** The `UserProfile` at the end of the edge. */
-  node: UserProfile;
-};
-
-
-/** Information about pagination in a connection. */
-export type PageInfo = {
-  __typename?: 'PageInfo';
-  /** When paginating forwards, are there more items? */
-  hasNextPage: Scalars['Boolean'];
-  /** When paginating backwards, are there more items? */
-  hasPreviousPage: Scalars['Boolean'];
-  /** When paginating backwards, the cursor to continue. */
-  startCursor?: Maybe<Scalars['Cursor']>;
-  /** When paginating forwards, the cursor to continue. */
-  endCursor?: Maybe<Scalars['Cursor']>;
-};
-
-/** Methods to use when ordering `UserProfile`. */
-export enum UserProfilesOrderBy {
-  Natural = 'NATURAL',
-  UserIdAsc = 'USER_ID_ASC',
-  UserIdDesc = 'USER_ID_DESC',
-  PrimaryKeyAsc = 'PRIMARY_KEY_ASC',
-  PrimaryKeyDesc = 'PRIMARY_KEY_DESC'
-}
-
-/**
- * A condition to be used against `UserProfile` object types. All fields are tested
- * for equality and combined with a logical ‘and.’
- */
-export type UserProfileCondition = {
-  /** Checks for equality with the object’s `userId` field. */
-  userId?: Maybe<Scalars['UUID']>;
-};
 
 /** The root mutation type which contains root level fields which mutate data. */
 export type Mutation = {
@@ -174,8 +89,6 @@ export type Mutation = {
   deleteUserProfileByUserId?: Maybe<DeleteUserProfilePayload>;
   /** Creates a JWT token that will securely identify a user and give them certain permissions. This token expires in 2 days. */
   authenticate?: Maybe<AuthenticatePayload>;
-  /** Registers a single user creating their profile (user_profile) and an account (user_account). */
-  registerPerson?: Maybe<RegisterPersonPayload>;
   /** Registers a single user creating their profile (user_profile) and an account (user_account). */
   registerUser?: Maybe<RegisterUserPayload>;
 };
@@ -212,12 +125,6 @@ export type MutationAuthenticateArgs = {
 
 
 /** The root mutation type which contains root level fields which mutate data. */
-export type MutationRegisterPersonArgs = {
-  input: RegisterPersonInput;
-};
-
-
-/** The root mutation type which contains root level fields which mutate data. */
 export type MutationRegisterUserArgs = {
   input: RegisterUserInput;
 };
@@ -234,14 +141,6 @@ export type UpdateUserProfilePayload = {
   userProfile?: Maybe<UserProfile>;
   /** Our root query field type. Allows us to run any query from our mutation payload. */
   query?: Maybe<Query>;
-  /** An edge for our `UserProfile`. May be used by Relay 1. */
-  userProfileEdge?: Maybe<UserProfilesEdge>;
-};
-
-
-/** The output of our update `UserProfile` mutation. */
-export type UpdateUserProfilePayloadUserProfileEdgeArgs = {
-  orderBy?: Maybe<Array<UserProfilesOrderBy>>;
 };
 
 /** All input for the `updateUserProfile` mutation. */
@@ -297,14 +196,6 @@ export type DeleteUserProfilePayload = {
   deletedUserProfileId?: Maybe<Scalars['ID']>;
   /** Our root query field type. Allows us to run any query from our mutation payload. */
   query?: Maybe<Query>;
-  /** An edge for our `UserProfile`. May be used by Relay 1. */
-  userProfileEdge?: Maybe<UserProfilesEdge>;
-};
-
-
-/** The output of our delete `UserProfile` mutation. */
-export type DeleteUserProfilePayloadUserProfileEdgeArgs = {
-  orderBy?: Maybe<Array<UserProfilesOrderBy>>;
 };
 
 /** All input for the `deleteUserProfile` mutation. */
@@ -354,40 +245,6 @@ export type AuthenticateInput = {
   password: Scalars['String'];
 };
 
-/** The output of our `registerPerson` mutation. */
-export type RegisterPersonPayload = {
-  __typename?: 'RegisterPersonPayload';
-  /**
-   * The exact same `clientMutationId` that was provided in the mutation input,
-   * unchanged and unused. May be used by a client to track mutations.
-   */
-  clientMutationId?: Maybe<Scalars['String']>;
-  userProfile?: Maybe<UserProfile>;
-  /** Our root query field type. Allows us to run any query from our mutation payload. */
-  query?: Maybe<Query>;
-  /** An edge for our `UserProfile`. May be used by Relay 1. */
-  userProfileEdge?: Maybe<UserProfilesEdge>;
-};
-
-
-/** The output of our `registerPerson` mutation. */
-export type RegisterPersonPayloadUserProfileEdgeArgs = {
-  orderBy?: Maybe<Array<UserProfilesOrderBy>>;
-};
-
-/** All input for the `registerPerson` mutation. */
-export type RegisterPersonInput = {
-  /**
-   * An arbitrary string value with no semantic meaning. Will be included in the
-   * payload verbatim. May be used to track mutations by the client.
-   */
-  clientMutationId?: Maybe<Scalars['String']>;
-  firstName: Scalars['String'];
-  lastName: Scalars['String'];
-  email: Scalars['String'];
-  password: Scalars['String'];
-};
-
 /** The output of our `registerUser` mutation. */
 export type RegisterUserPayload = {
   __typename?: 'RegisterUserPayload';
@@ -396,17 +253,9 @@ export type RegisterUserPayload = {
    * unchanged and unused. May be used by a client to track mutations.
    */
   clientMutationId?: Maybe<Scalars['String']>;
-  userProfile?: Maybe<UserProfile>;
+  jwtToken?: Maybe<Scalars['JwtToken']>;
   /** Our root query field type. Allows us to run any query from our mutation payload. */
   query?: Maybe<Query>;
-  /** An edge for our `UserProfile`. May be used by Relay 1. */
-  userProfileEdge?: Maybe<UserProfilesEdge>;
-};
-
-
-/** The output of our `registerUser` mutation. */
-export type RegisterUserPayloadUserProfileEdgeArgs = {
-  orderBy?: Maybe<Array<UserProfilesOrderBy>>;
 };
 
 /** All input for the `registerUser` mutation. */
@@ -418,6 +267,6 @@ export type RegisterUserInput = {
   clientMutationId?: Maybe<Scalars['String']>;
   firstName: Scalars['String'];
   lastName: Scalars['String'];
-  email: Scalars['String'];
+  _email: Scalars['String'];
   password: Scalars['String'];
 };

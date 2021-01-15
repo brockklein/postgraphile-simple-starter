@@ -86,7 +86,8 @@ alter default privileges revoke execute on functions from public;
 grant usage on schema app_public to app_anonymous, app_user;
 
 
-create or replace function app_private.set_updated_at() returns trigger as $$
+drop function if exists app_private.set_updated_at cascade;
+create function app_private.set_updated_at() returns trigger as $$
 begin
   new.updated_at := current_timestamp;
   return new;
@@ -150,9 +151,9 @@ comment on column app_private.user_account.lockout_end is '**NOT IMPLEMENTED**: 
 comment on column app_private.user_account.lockout_enabled is '**NOT IMPLEMENTED**: whether a user has been locked out due to too many invalid login attempts.';
 comment on column app_private.user_account.access_failed_count is '**NOT IMPLEMENTED**: how many failed log in attempts in a row a user has tried.';
 
-
-create table if not exists app_public.user_profile (
-  user_id      uuid not null,
+drop table if exists app_public.user_profile cascade;
+create table app_public.user_profile (
+  user_id      uuid not null, -- Purposefuly does not include a default - it should always be the ID from the corresponding user_account table.
 
   created_at   timestamp not null default now(),
   updated_at   timestamp,
@@ -188,56 +189,44 @@ comment on column app_public.user_profile.last_name is 'The user''s last name.';
 
 alter table app_public.user_profile enable row level security;
 
+drop policy if exists select_user_profile on app_public.user_profile cascade;
 create policy select_user_profile on app_public.user_profile for select
   using (true);
 
+drop policy if exists update_user_profile on app_public.user_profile cascade;
 create policy update_user_profile on app_public.user_profile for update to app_user
   using (user_id = nullif(current_setting('jwt.claims.user_id', true), '')::uuid);
 
+drop policy if exists delete_user_profile on app_public.user_profile cascade;
 create policy delete_user_profile on app_public.user_profile for delete to app_user
   using (user_id = nullif(current_setting('jwt.claims.user_id', true), '')::uuid);
 
 
 -- Example function that would be exposed via GraphQL
-create or replace function app_public.user_profile_full_name(user_profile app_public.user_profile) returns text as $$
+drop function if exists app_public.user_profile_full_name;
+create function app_public.user_profile_full_name(user_profile app_public.user_profile) returns text as $$
   select user_profile.first_name || ' ' || user_profile.last_name
 $$ language sql stable;
 comment on function app_public.user_profile_full_name(app_public.user_profile) is 'A user''s full name which is a concatenation of their first and last name.';
 
 grant execute on function app_public.user_profile_full_name(app_public.user_profile) to app_user;
 
-
--- Following guidelines here: https://www.graphile.org/postgraphile/postgresql-schema-design/#storing-emails-and-passwords
-create or replace function app_public.register_user(
-  first_name text,
-  last_name text,
-  email text, 
-  password text
-) returns app_public.user_profile as $$
-declare
-  user_profile app_public.user_profile;
+drop function if exists app_private.assert_valid_password cascade;
+create function app_private.assert_valid_password(new_password text) returns void as $$
 begin
-  insert into app_public.user_profile (first_name, last_name) values
-    (first_name, last_name)
-    returning * into user_profile;
-
-  insert into app_private.user_account (user_id, email, password_hash) values
-    (user_profile.id, email, crypt(password, gen_salt('bf')));
-
-  return user_profile;
+  -- TODO: add better assertions!
+  if length(new_password) < 11 then
+    raise exception 'Password is too weak' using errcode = 'WEAKP';
+  end if;
 end;
-$$ language plpgsql strict security definer;
-
-comment on function app_public.register_user(text, text, text, text) is 'Registers a single user creating their profile (user_profile) and an account (user_account).';
-
-grant execute on function app_public.register_person(text, text, text, text) to app_anonymous;
+$$ language plpgsql;
 
 
 drop type if exists app_public.jwt_token cascade;
 create type app_public.jwt_token as (
   role text,
   user_id uuid,
-  exp bigint
+  exp integer
 );
 comment on type app_public.jwt_token is '
 (Postgraphile) This is a type specifically for Postgraphile. Postgraphile has an option to use this type to define the shape of a JWT when authenticating users.It would not necessarily be needed otherwise. <br><br>
@@ -249,6 +238,7 @@ Postgraphile does a couple things for us with this:
 ';
 
 
+drop function if exists app_public.authenticate cascade;
 create function app_public.authenticate(
   email text,
   password text
@@ -277,11 +267,55 @@ comment on function app_public.authenticate(text, text) is 'Creates a JWT token 
 grant execute on function app_public.authenticate(text, text) to app_anonymous, app_user;
 
 
-create or replace function app_public.current_user() returns app_public.user_profile as $$
+-- Following guidelines here: https://www.graphile.org/postgraphile/postgresql-schema-design/#storing-emails-and-passwords
+drop function if exists app_public.register_user cascade;
+create function app_public.register_user(
+  first_name text,
+  last_name text,
+  _email text, 
+  password text
+) returns app_public.jwt_token as $$
+declare
+  user_profile app_public.user_profile;
+  user_account app_private.user_account;
+begin
+  if exists(
+    select 1
+    from app_private.user_account
+    where app_private.user_account.email = _email
+  ) then
+    raise exception 'An account already exists with this email address.' using errcode = 'TAKEN';
+  end if;
+
+  insert into app_private.user_account (email, password_hash) values
+    (_email, crypt(password, gen_salt('bf')))
+    returning * into user_account;
+
+  insert into app_public.user_profile (user_id, first_name, last_name) values
+    (user_account.id, first_name, last_name)
+    returning * into user_profile;
+
+  return (select app_public.authenticate(_email, password));
+
+  --  return (
+  --     'app_user', -- The Postgres role we want the user to make requests as.
+  --     account.id, 
+  --     extract(epoch from (now() + interval '2 days'))
+  --   )::app_public.jwt_token;
+end;
+$$ language plpgsql strict security definer;
+
+comment on function app_public.register_user(text, text, text, text) is 'Registers a single user creating their profile (user_profile) and an account (user_account).';
+
+grant execute on function app_public.register_user(text, text, text, text) to app_anonymous;
+
+
+drop function if exists app_public.current_user cascade;
+create function app_public.current_user() returns app_public.user_profile as $$
   select *
   from app_public.user_profile
   where user_id = nullif(current_setting('jwt.claims.user_id', true), '')::uuid
-$$ language sql stable;
+$$ language sql stable security definer;
 comment on function app_public.current_user() is 'Gets the user who was identified by our JWT.';
 
 grant execute on function app_public.current_user() to app_anonymous, app_user;

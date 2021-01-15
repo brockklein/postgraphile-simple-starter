@@ -85,47 +85,12 @@ export function useCurrentUserLazyQuery(baseOptions?: Apollo.LazyQueryHookOption
 export type CurrentUserQueryHookResult = ReturnType<typeof useCurrentUserQuery>;
 export type CurrentUserLazyQueryHookResult = ReturnType<typeof useCurrentUserLazyQuery>;
 export type CurrentUserQueryResult = Apollo.QueryResult<Types.CurrentUserQuery, Types.CurrentUserQueryVariables>;
-export const FindUserProfileDocument = gql`
-    query findUserProfile($userId: UUID!) {
-  userProfileByUserId(userId: $userId) {
-    ...UserProfileFields
-  }
-}
-    ${UserProfileFieldsFragmentDoc}`;
-
-/**
- * __useFindUserProfileQuery__
- *
- * To run a query within a React component, call `useFindUserProfileQuery` and pass it any options that fit your needs.
- * When your component renders, `useFindUserProfileQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useFindUserProfileQuery({
- *   variables: {
- *      userId: // value for 'userId'
- *   },
- * });
- */
-export function useFindUserProfileQuery(baseOptions: Apollo.QueryHookOptions<Types.FindUserProfileQuery, Types.FindUserProfileQueryVariables>) {
-        return Apollo.useQuery<Types.FindUserProfileQuery, Types.FindUserProfileQueryVariables>(FindUserProfileDocument, baseOptions);
-      }
-export function useFindUserProfileLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Types.FindUserProfileQuery, Types.FindUserProfileQueryVariables>) {
-          return Apollo.useLazyQuery<Types.FindUserProfileQuery, Types.FindUserProfileQueryVariables>(FindUserProfileDocument, baseOptions);
-        }
-export type FindUserProfileQueryHookResult = ReturnType<typeof useFindUserProfileQuery>;
-export type FindUserProfileLazyQueryHookResult = ReturnType<typeof useFindUserProfileLazyQuery>;
-export type FindUserProfileQueryResult = Apollo.QueryResult<Types.FindUserProfileQuery, Types.FindUserProfileQueryVariables>;
 export const RegisterUserDocument = gql`
-    mutation RegisterUser($firstName: String!, $lastName: String!, $email: String!, $password: String!) {
+    mutation RegisterUser($firstName: String!, $lastName: String!, $_email: String!, $password: String!) {
   registerUser(
-    input: {firstName: $firstName, lastName: $lastName, email: $email, password: $password}
+    input: {firstName: $firstName, lastName: $lastName, _email: $_email, password: $password}
   ) {
-    userProfile {
-      firstName
-    }
+    jwtToken
   }
 }
     `;
@@ -146,7 +111,7 @@ export type RegisterUserMutationFn = Apollo.MutationFunction<Types.RegisterUserM
  *   variables: {
  *      firstName: // value for 'firstName'
  *      lastName: // value for 'lastName'
- *      email: // value for 'email'
+ *      _email: // value for '_email'
  *      password: // value for 'password'
  *   },
  * });

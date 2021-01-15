@@ -3,8 +3,8 @@
   "version": "0.0.0",
   "description": "",
   "scripts": {
-    "postgraphile": "postgraphile --connection postgres://app_postgraphile:zqDHRFx5fEYMbkq@localhost/eventcast --schema app_public --cors --export-schema-graphql schema.graphql --default-role app_anonymous --jwt-secret development --jwt-token-identifier app_public.jwt_token --subscriptions --watch --owner-connection postgres://postgres:postgres@localhost/postgres --dynamic-json --no-setof-functions-contain-nulls --no-ignore-rbac --no-ignore-indexes --show-error-stack=json --extended-errors hint,detail,errcode --append-plugins @graphile-contrib/pg-simplify-inflector --append-plugins @graphile-contrib/pg-many-to-many --export-schema-graphql schema.graphql --graphiql '/' --enhance-graphiql --allow-explain --enable-query-batching --legacy-relations omit",
-    "graphile-migrate-watch": "graphile-migrate watch"
+    "graphile": "postgraphile --connection postgres://app_postgraphile:zqDHRFx5fEYMbkq@localhost:5433/eventcast --schema app_public --cors --export-schema-graphql schema.graphql --default-role app_anonymous --jwt-secret development --jwt-token-identifier app_public.jwt_token --subscriptions --watch --owner-connection postgres://postgres:postgres@localhost:5433/postgres --dynamic-json --no-setof-functions-contain-nulls --no-ignore-rbac --no-ignore-indexes --show-error-stack=json --extended-errors hint,detail,errcode --append-plugins @graphile-contrib/pg-simplify-inflector --append-plugins @graphile-contrib/pg-many-to-many --export-schema-graphql schema.graphql --graphiql '/' --enhance-graphiql --allow-explain --enable-query-batching --legacy-relations omit",
+    "migrate": "graphile-migrate watch"
   },
   "keywords": [],
   "author": "",

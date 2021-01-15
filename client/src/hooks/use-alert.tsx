@@ -16,8 +16,13 @@ export interface IAlert extends INewAlert {
     key: string
 }
 
-const useProvideAlerts = (): IAlertContext => {
+interface IAlertContext {
+    addAlert: (alert: INewAlert) => IAlert
+    updateAlert: (alert: IAlert) => void
+}
+const AlertContext = createContext<IAlertContext | null>(null)
 
+export const AlertsProvider: React.FC = ({ children }) => {
     const [alerts, setAlerts] = useState<IAlert[]>([])
 
     const removeAlert = (alert: IAlert) => setAlerts([...alerts.filter(o => o.key === alert.key)])
@@ -44,60 +49,45 @@ const useProvideAlerts = (): IAlertContext => {
         throw new Error('NOT IMPLEMENtED')
     }
 
-    return {
-        alerts,
-        addAlert,
-        updateAlert,
-        removeAlert
-    }
-}
-
-interface IAlertContext {
-    alerts: IAlert[]
-    addAlert: (alert: INewAlert) => IAlert
-    updateAlert: (alert: IAlert) => void
-    removeAlert: (alert: IAlert) => void
-}
-const AlertContext = createContext<IAlertContext | null>(null)
-
-export const AlertsProvider: React.FC = ({ children }) => {
-    const alertControls = useProvideAlerts()
-    const { alerts, removeAlert } = alertControls
-
     const titleId = uuid()
     const descriptionId = uuid()
 
     const [currentAlert, setCurrentAlert] = useState<IAlert>()
-
-    const getNextAlert = () => alerts.length > 0 ? alerts[0] : undefined
+    const [open, setOpen] = useState(false)
 
     // Advance which alert is being shown in the dialog. Close the alert dialog if currently showing the last alert.
     const nextAlert = () => {
-        if (currentAlert) {
-            if (currentAlert.afterClose) currentAlert.afterClose()
-            removeAlert(currentAlert)
-        }
-        const asdlkfj = getNextAlert()
-        console.log('the next alert!', asdlkfj)
-        setCurrentAlert(asdlkfj)
+        const _alerts = [...alerts]
+        let nextAlert: IAlert | undefined = _alerts.pop()
+        if (currentAlert && currentAlert.afterClose) currentAlert.afterClose()
+
+        /* 
+            We only set the current alert if there is a next alert. 
+            
+            If there isn't a next alert, the modal's 'onExited' callback handles clearing the 'currentAlert', that way the modal's insides don't 'collapse' because the current alert content is removed before the modal finishes exiting.
+        */
+        if (nextAlert) setCurrentAlert(nextAlert)
+
+        setOpen(!!nextAlert)
+        setAlerts(_alerts)
     }
 
     useEffect(() => {
-        console.log('alerts', alerts)
         if (!currentAlert && alerts.length > 0) nextAlert()
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [alerts])
 
     return (
-        <AlertContext.Provider value={alertControls}>
+        <AlertContext.Provider value={{ addAlert, updateAlert }}>
             <Fragment>
-                {currentAlert?.title}
                 <Dialog
-                    open={!!currentAlert}
+                    open={open}
                     aria-labelledby={titleId}
                     aria-describedby={descriptionId}
-                    disableBackdropClick={!!getNextAlert() || !currentAlert?.closable}
+                    onExited={() => {
+                        setCurrentAlert(undefined)
+                    }}
                 >
                     <DialogTitle id={titleId}>{currentAlert?.title}</DialogTitle>
                     <DialogContent dividers>

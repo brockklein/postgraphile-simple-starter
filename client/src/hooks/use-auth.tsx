@@ -1,38 +1,57 @@
-import React, { useState, useEffect, useContext, createContext, FunctionComponent } from 'react'
-import { useCurrentUserQuery } from '../graphql/autogenerate/hooks'
-import { CurrentUserQuery } from '../graphql/autogenerate/operations'
-
-// Provider hook that creates auth object and handles state
-const useProvideAuth = () => {
-    const [user, setUser] = useState<CurrentUserQuery | undefined>(undefined)
-
-    // Subscribe to user on mount
-    // Because this sets state in the callback it will cause any component that utilizes this hook to re-render with the latest auth object.
-    const { error, data } = useCurrentUserQuery({ pollInterval: 1000 })
-
-    useEffect(() => {
-        if (error) throw new Error(error.message)
-        setUser(data)
-    }, [error, data])
-
-    // Return the user object and auth methods
-    return {
-        user,
-    }
-}
+import { MutationFunctionOptions } from '@apollo/react-hooks'
+import { useSnackbar } from 'notistack'
+import React, { useEffect, useContext, createContext, FunctionComponent } from 'react'
+import { useLocalStorage } from 'react-use'
+import { useAppState, useLoadingOverlay } from '.'
+import { useCurrentUserLazyQuery, useRegisterUserMutation } from '../graphql/autogenerate/hooks'
+import { RegisterUserMutation, RegisterUserMutationVariables } from '../graphql/autogenerate/operations'
+import { AppActionType } from '../stores/app-state'
 
 interface IAuthContext {
-    user: CurrentUserQuery | undefined
+    registerUser: (options?: MutationFunctionOptions<RegisterUserMutation, RegisterUserMutationVariables>) => Promise<any>
 }
-const AuthContext = createContext<IAuthContext>({
-    user: undefined,
-})
+const AuthContext = createContext<IAuthContext | undefined>(undefined)
+
+// Hook for child components to get the auth object and re-render when it changes.
+export const useAuth = () => {
+    const context = useContext(AuthContext)
+    if (!context) throw new Error(`Attempted to use AuthContext before it's provider.`)
+    return context
+}
 
 // Provider component that wraps your app and makes auth object available to any child component that calls useAuth().
 export const AuthProvider: FunctionComponent = ({ children }) => {
-    const auth = useProvideAuth()
-    return <AuthContext.Provider value={auth}>{children}</AuthContext.Provider>
+    const { enqueueSnackbar } = useSnackbar()
+
+    const { state, dispatch } = useAppState()
+
+    const [, setLocalStorageJwt, clearLocalStorageJwt] = useLocalStorage<string>('jwt', undefined, { raw: true })
+
+    const [currentUserQuery, currentUserQueryStatus] = useCurrentUserLazyQuery({ pollInterval: 1000 })
+
+    const [registerUser, registerUserStatus] = useRegisterUserMutation()
+    useLoadingOverlay(registerUserStatus.loading)
+
+    useEffect(() => {
+        if (registerUserStatus.error) enqueueSnackbar(`${registerUserStatus.error.name} - ${registerUserStatus.error.message}`, { variant: 'error', preventDuplicate: false })
+        if (registerUserStatus.data) dispatch({ type: AppActionType.setJwt, payload: { jwt: registerUserStatus.data?.registerUser?.jwtToken } })
+    }, [registerUserStatus.error, registerUserStatus.data])
+
+    useEffect(() => {
+        if (currentUserQueryStatus.error) enqueueSnackbar(`${currentUserQueryStatus.error.name} - ${currentUserQueryStatus.error.message}`, { variant: 'error', preventDuplicate: false })
+        dispatch({ type: AppActionType.setUser, payload: { user: currentUserQueryStatus.data } })
+    }, [currentUserQueryStatus.error, currentUserQueryStatus.data])
+
+    useEffect(() => {
+        if (state.jwt) {
+            currentUserQuery()
+            setLocalStorageJwt(state.jwt)
+        } else {
+            currentUserQueryStatus.stopPolling && currentUserQueryStatus.stopPolling()
+            clearLocalStorageJwt()
+        }
+    }, [state.jwt])
+
+    return <AuthContext.Provider value={{ registerUser }}>{children}</AuthContext.Provider>
 }
 
-// Hook for child components to get the auth object and re-render when it changes.
-export const useAuth = () => useContext(AuthContext)

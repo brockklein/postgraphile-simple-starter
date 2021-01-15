@@ -16,7 +16,7 @@
    *
    * RECOMMENDATION: use `DATABASE_URL` envvar instead.
    */
-  "connectionString": "postgres://postgres:postgres@localhost/eventcast",
+  "connectionString": "postgres://postgres:postgres@localhost:5433/eventcast",
 
   /*
    * shadowConnectionString: like connectionString, but this is used for the
@@ -24,7 +24,7 @@
    *
    * RECOMMENDATION: use `SHADOW_DATABASE_URL` envvar instead.
    */
-  "shadowConnectionString": "postgres://postgres:postgres@localhost/eventcast_shadow",
+  "shadowConnectionString": "postgres://postgres:postgres@localhost:5433/eventcast_shadow",
 
   /*
    * rootConnectionString: like connectionString, but this is used for
@@ -33,7 +33,7 @@
    *
    * RECOMMENDATION: use `ROOT_DATABASE_URL` envvar instead.
    */
-  "rootConnectionString": "postgres://postgres:postgres@localhost/postgres",
+  "rootConnectionString": "postgres://postgres:postgres@localhost:5433/postgres",
 
   /*
    * pgSettings: key-value settings to be automatically loaded into PostgreSQL
@@ -88,7 +88,7 @@
     // "afterReset.sql",
     // { "_": "command", "command": "graphile-worker --schema-only" },
   ],
- 
+
   /*
    * afterAllMigrations: actions executed once all migrations are complete.
    */

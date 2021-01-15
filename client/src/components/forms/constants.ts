@@ -1,0 +1,1 @@
+export const MATERIAL_FIELD_VARIANT: 'filled' | 'outlined' = 'outlined'

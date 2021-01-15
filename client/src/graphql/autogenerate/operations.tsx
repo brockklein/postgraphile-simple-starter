@@ -33,23 +33,10 @@ export type CurrentUserQuery = (
   )> }
 );
 
-export type FindUserProfileQueryVariables = Types.Exact<{
-  userId: Types.Scalars['UUID'];
-}>;
-
-
-export type FindUserProfileQuery = (
-  { __typename?: 'Query' }
-  & { userProfileByUserId?: Types.Maybe<(
-    { __typename?: 'UserProfile' }
-    & UserProfileFieldsFragment
-  )> }
-);
-
 export type RegisterUserMutationVariables = Types.Exact<{
   firstName: Types.Scalars['String'];
   lastName: Types.Scalars['String'];
-  email: Types.Scalars['String'];
+  _email: Types.Scalars['String'];
   password: Types.Scalars['String'];
 }>;
 
@@ -58,10 +45,7 @@ export type RegisterUserMutation = (
   { __typename?: 'Mutation' }
   & { registerUser?: Types.Maybe<(
     { __typename?: 'RegisterUserPayload' }
-    & { userProfile?: Types.Maybe<(
-      { __typename?: 'UserProfile' }
-      & Pick<Types.UserProfile, 'firstName'>
-    )> }
+    & Pick<Types.RegisterUserPayload, 'jwtToken'>
   )> }
 );
 

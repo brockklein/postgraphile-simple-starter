@@ -1,9 +1,19 @@
 #import "./fragments/userProfileFields.graphql"
 
-mutation RegisterUser($firstName: String!, $lastName: String!, $email: String!, $password: String!) {
-  registerUser(input: {firstName: $firstName, lastName: $lastName, email: $email, password: $password}) {
-    userProfile {
-      firstName
+mutation RegisterUser(
+  $firstName: String!
+  $lastName: String!
+  $_email: String!
+  $password: String!
+) {
+  registerUser(
+    input: {
+      firstName: $firstName
+      lastName: $lastName
+      _email: $_email
+      password: $password
     }
+  ) {
+    jwtToken
   }
 }
