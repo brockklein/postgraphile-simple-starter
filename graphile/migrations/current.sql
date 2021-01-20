@@ -254,7 +254,7 @@ begin
     return (
       'app_user', -- The Postgres role we want the user to make requests as.
       account.id, 
-      extract(epoch from (now() + interval '2 days'))
+      extract(epoch from (now() + interval '5 days'))
     )::app_public.jwt_token;
   else
     return null;
@@ -262,9 +262,33 @@ begin
 end;
 $$ language plpgsql strict security definer;
 
-comment on function app_public.authenticate(text, text) is 'Creates a JWT token that will securely identify a user and give them certain permissions. This token expires in 2 days.';
+comment on function app_public.authenticate(text, text) is 'Creates a JWT token that will securely identify a user and give them certain permissions. This token expires in 5 days.';
 
 grant execute on function app_public.authenticate(text, text) to app_anonymous, app_user;
+
+drop function if exists app_private.refresh_token cascade;
+create function app_private.refresh_token() returns app_public.jwt_token as $$
+declare
+  account app_public.user_profile;
+begin
+  select a.* into account
+  from app_public.current_user() as a;
+
+  if account is not null then
+    return (
+      'app_user', -- The Postgres role we want the user to make requests as.
+      account.id, 
+      extract(epoch from (now() + interval '5 days'))
+    )::app_public.jwt_token;
+  else
+    return null;
+  end if;
+end;
+$$ language plpgsql strict security definer;
+
+comment on function app_private.refresh_token() is 'Allows a successfully authenticated user to refresh their access token for another 5 days.';
+
+grant execute on function app_private.refresh_token() to app_user;
 
 
 -- Following guidelines here: https://www.graphile.org/postgraphile/postgresql-schema-design/#storing-emails-and-passwords

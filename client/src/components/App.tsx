@@ -2,6 +2,7 @@ import { Routes } from './routes'
 import { Container } from '@material-ui/core'
 import React from 'react'
 import { ComposeProviders, SnackbarProvider, ApolloProvider, ThemeProvider, AppStateProvider, AlertsProvider, AuthProvider, LoadingProvider } from './providers'
+import { Bootstrap } from './bootstrap'
 
 export const App = () => {
   return (
@@ -14,7 +15,8 @@ export const App = () => {
           SnackbarProvider,
           AlertsProvider,
           ApolloProvider,
-          AuthProvider
+          Bootstrap, // Bootstrap comes before AuthProvider because AuthProvider immediately tries to query for the authed user
+          AuthProvider,
         ]}
       >
         <Routes />

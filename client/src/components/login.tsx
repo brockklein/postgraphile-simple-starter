@@ -1,37 +1,17 @@
 import { Button, Grid, Box, Typography, } from '@material-ui/core'
-import { useSnackbar } from 'notistack'
-import { useLoadingOverlay } from '../hooks'
+import { useAuth } from '../hooks'
 import { Form, Formik } from 'formik'
 import * as Yup from 'yup'
 import { PasswordField, TextInput } from './forms'
 import clsx from 'clsx'
 import logo from '../images/logo.svg'
-import { useAuthenticateMutation } from '../graphql/autogenerate/hooks'
-import { useEffect } from 'react'
 import { usePaddedBorderStyles } from '../styles'
 import { Link } from 'react-router-dom'
 
 export const Login = () => {
-
     const classes = usePaddedBorderStyles()
 
-    const { enqueueSnackbar } = useSnackbar()
-
-    const [authenticate, { data, loading, error }] = useAuthenticateMutation()
-    useLoadingOverlay(loading)
-
-    useEffect(() => {
-        /* 
-            A null jwtToken means the authentication failed for any reason (wrong password, account doesn't exist)
-        */
-        if (data && data.authenticate?.jwtToken === null) {
-            enqueueSnackbar(<div>Login failed. <span>Email and password do not match, or an account does not exist with the provided email address.</span></div>, { variant: 'error', preventDuplicate: false })
-        }
-    }, [data])
-
-    useEffect(() => {
-        if (error) enqueueSnackbar(error.message, { variant: 'error', preventDuplicate: false })
-    }, [error])
+    const { login } = useAuth()
 
     return (
         <Formik
@@ -43,9 +23,7 @@ export const Login = () => {
                 email: Yup.string().required('Required'),
                 password: Yup.string().required('Required')
             })}
-            onSubmit={(values) => {
-                authenticate({ variables: values })
-            }}
+            onSubmit={login}
         >
             <Grid justify='center' container>
                 <Grid className={clsx(classes.borders)} container item xs={12} sm={10} md={8} lg={5} justify='center'>
@@ -59,7 +37,7 @@ export const Login = () => {
                             </Box>
                         </Grid>
                         <Grid item container>
-                            <TextInput fieldProps={{ name: 'email', label: 'Email', helperText: 'Email address' }} />
+                            <TextInput fieldProps={{ name: 'email', label: 'Email' }} />
                         </Grid>
                         <Grid item container>
                             <PasswordField fieldProps={{ name: 'password', label: 'Password', labelWidth: 70 }} />

@@ -1,14 +1,24 @@
-import { MutationFunctionOptions } from '@apollo/react-hooks'
 import { useSnackbar } from 'notistack'
 import React, { useEffect, useContext, createContext, FunctionComponent } from 'react'
-import { useLocalStorage } from 'react-use'
 import { useAppState, useLoadingOverlay } from '.'
-import { useCurrentUserLazyQuery, useRegisterUserMutation } from '../graphql/autogenerate/hooks'
-import { RegisterUserMutation, RegisterUserMutationVariables } from '../graphql/autogenerate/operations'
+import { useAuthenticateMutation, useRegisterUserMutation } from '../graphql/autogenerate/hooks'
 import { AppActionType } from '../stores/app-state'
+import { setAccessToken } from './apollo/token'
+
+interface IAuthCredentials {
+    email: string
+    password: string
+}
+
+interface ISignup extends IAuthCredentials {
+    firstName: string
+    lastName: string
+}
 
 interface IAuthContext {
-    registerUser: (options?: MutationFunctionOptions<RegisterUserMutation, RegisterUserMutationVariables>) => Promise<any>
+    signup: (args: ISignup) => void
+    login: (args: IAuthCredentials) => void
+    logout: () => void
 }
 const AuthContext = createContext<IAuthContext | undefined>(undefined)
 
@@ -23,35 +33,73 @@ export const useAuth = () => {
 export const AuthProvider: FunctionComponent = ({ children }) => {
     const { enqueueSnackbar } = useSnackbar()
 
-    const { state, dispatch } = useAppState()
+    const { dispatch } = useAppState()
 
-    const [, setLocalStorageJwt, clearLocalStorageJwt] = useLocalStorage<string>('jwt', undefined, { raw: true })
-
-    const [currentUserQuery, currentUserQueryStatus] = useCurrentUserLazyQuery({ pollInterval: 1000 })
-
+    /* 
+        Signup
+    */
     const [registerUser, registerUserStatus] = useRegisterUserMutation()
     useLoadingOverlay(registerUserStatus.loading)
 
     useEffect(() => {
         if (registerUserStatus.error) enqueueSnackbar(`${registerUserStatus.error.name} - ${registerUserStatus.error.message}`, { variant: 'error', preventDuplicate: false })
-        if (registerUserStatus.data) dispatch({ type: AppActionType.setJwt, payload: { jwt: registerUserStatus.data?.registerUser?.jwtToken } })
+
+        if (registerUserStatus.data?.registerUser?.jwtToken) {
+            console.log('was this called? huh...', registerUserStatus.data?.registerUser?.jwtToken)
+            setAccessToken(registerUserStatus.data.registerUser.jwtToken)
+            enqueueSnackbar('Account created. Welcome!', { variant: 'success' })
+            dispatch({ type: AppActionType.login })
+        }
     }, [registerUserStatus.error, registerUserStatus.data])
 
-    useEffect(() => {
-        if (currentUserQueryStatus.error) enqueueSnackbar(`${currentUserQueryStatus.error.name} - ${currentUserQueryStatus.error.message}`, { variant: 'error', preventDuplicate: false })
-        dispatch({ type: AppActionType.setUser, payload: { user: currentUserQueryStatus.data } })
-    }, [currentUserQueryStatus.error, currentUserQueryStatus.data])
+    const signup = (variables: ISignup) => {
+        console.log('was signup called?')
+        registerUser({ variables: { ...variables, _email: variables.email } }).catch()
+    }
+
+    /* 
+        Login
+    */
+    const [authenticate, authenticateStatus] = useAuthenticateMutation()
+    useLoadingOverlay(authenticateStatus.loading)
 
     useEffect(() => {
-        if (state.jwt) {
-            currentUserQuery()
-            setLocalStorageJwt(state.jwt)
-        } else {
-            currentUserQueryStatus.stopPolling && currentUserQueryStatus.stopPolling()
-            clearLocalStorageJwt()
+        const { data, error } = authenticateStatus
+
+        if (error) enqueueSnackbar(error.message, { variant: 'error', preventDuplicate: false })
+
+        /* 
+            A null jwtToken means the authentication failed for any reason (wrong password, account doesn't exist)
+        */
+        if (data && data.authenticate?.jwtToken === null) {
+            enqueueSnackbar(
+                <div>
+                    Login failed. <span>Email and password do not match, or an account does not exist with the provided email address.</span>
+                </div>,
+                {
+                    variant: 'error',
+                    preventDuplicate: false,
+                }
+            )
         }
-    }, [state.jwt])
 
-    return <AuthContext.Provider value={{ registerUser }}>{children}</AuthContext.Provider>
+        if (data && data.authenticate?.jwtToken) {
+            setAccessToken(data.authenticate.jwtToken)
+            dispatch({ type: AppActionType.login })
+        }
+    }, [authenticateStatus.error, authenticateStatus.data])
+
+    const login = (variables: IAuthCredentials) => authenticate({ variables }).catch()
+
+    /* 
+        Logout
+    */
+    const logout = () => {
+        setAccessToken(null)
+        dispatch({ type: AppActionType.logout })
+    }
+
+
+    return <AuthContext.Provider value={{ logout, login, signup }} children={children} />
 }
 

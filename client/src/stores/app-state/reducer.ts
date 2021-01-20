@@ -2,12 +2,12 @@ import { AppAction, AppActionType, IAppState } from "./definitions";
 
 export const reducer = (state: IAppState, action: AppAction): IAppState => {
     switch (action.type) {
+        case AppActionType.bootstrap:
+            return { ...state, bootstrapped: true, ...action.payload }
+        case AppActionType.login:
+            return { ...state, authed: true }
         case AppActionType.logout:
-            return { ...state, user: undefined, jwt: undefined }
-        case AppActionType.setUser:
-            return { ...state, user: action.payload.user }
-        case AppActionType.setJwt:
-            return { ...state, jwt: action.payload.jwt }
+            return { ...state, authed: false }
         default:
             throw new Error('App State action not yet implemented.')
     }

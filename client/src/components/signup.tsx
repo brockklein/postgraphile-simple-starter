@@ -11,21 +11,21 @@ import { Link } from 'react-router-dom'
 export const Signup = () => {
     const classes = usePaddedBorderStyles()
 
-    const { registerUser } = useAuth()
+    const { signup } = useAuth()
 
     return (
         <Formik
             initialValues={{
                 firstName: '',
                 lastName: '',
-                _email: '',
+                email: '',
                 password: '',
                 confirmPassword: '',
             }}
             validationSchema={Yup.object({
                 firstName: Yup.string().required('Required'),
                 lastName: Yup.string().required('Required'),
-                _email: Yup.string().required('Required'),
+                email: Yup.string().required('Required'),
                 password: Yup.string()
                     .min(12, 'Must be at least 12 characters - chain some common words together! Your password is stronger if it is long and you can remember it, not if it contains numbers, random capitalization, or special characters. 😊')
                     .required('Required'),
@@ -38,10 +38,7 @@ export const Signup = () => {
                         }
                     ),
             })}
-            onSubmit={(values) => {
-                console.log('querying', values)
-                registerUser({ variables: values }).catch(console.log)
-            }}
+            onSubmit={signup}
         >
             <Grid justify='center' container>
                 <Grid className={clsx(classes.borders)} container item xs={12} sm={10} md={8} lg={5} justify='center'>
@@ -63,7 +60,7 @@ export const Signup = () => {
                             </Grid>
                         </Grid>
                         <Grid item container>
-                            <TextInput fieldProps={{ name: '_email', label: 'Email' }} />
+                            <TextInput fieldProps={{ name: 'email', label: 'Email' }} />
                         </Grid>
                         <Grid item container>
                             <Grid item container>

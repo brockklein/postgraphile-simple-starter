@@ -87,7 +87,7 @@ export type Mutation = {
   deleteUserProfile?: Maybe<DeleteUserProfilePayload>;
   /** Deletes a single `UserProfile` using a unique key. */
   deleteUserProfileByUserId?: Maybe<DeleteUserProfilePayload>;
-  /** Creates a JWT token that will securely identify a user and give them certain permissions. This token expires in 2 days. */
+  /** Creates a JWT token that will securely identify a user and give them certain permissions. This token expires in 5 days. */
   authenticate?: Maybe<AuthenticatePayload>;
   /** Registers a single user creating their profile (user_profile) and an account (user_account). */
   registerUser?: Maybe<RegisterUserPayload>;

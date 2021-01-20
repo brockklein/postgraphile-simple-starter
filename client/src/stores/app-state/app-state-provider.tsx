@@ -1,5 +1,4 @@
 import { createContext, FunctionComponent, useContext, useReducer } from 'react'
-import { useLocalStorage } from 'react-use'
 import { AppAction, IAppState, reducer } from '.'
 
 const AppStateContext = createContext<{ state: IAppState, dispatch: React.Dispatch<AppAction> } | undefined>(undefined)
@@ -11,9 +10,7 @@ export const useAppState = () => {
 }
 
 export const AppStateProvider: FunctionComponent = ({ children }) => {
-    const [jwt] = useLocalStorage<string>('jwt', undefined, { raw: true })
-
-    const [state, dispatch] = useReducer(reducer, { jwt })
+    const [state, dispatch] = useReducer(reducer, {})
 
     return <AppStateContext.Provider value={{ state, dispatch }} children={children} />
 } 

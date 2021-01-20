@@ -12,7 +12,7 @@ interface IPasswordField extends IField {
 export const PasswordField = ({ fieldProps }: { fieldProps: IPasswordField }) => {
     const [field, meta] = useField(fieldProps)
 
-    const [showPassword, setShowPassword] = useState(true)
+    const [showPassword, setShowPassword] = useState(false)
 
     return (
         <FieldWrapper {...fieldProps} error={meta.error}>

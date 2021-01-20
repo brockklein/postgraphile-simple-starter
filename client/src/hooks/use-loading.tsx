@@ -1,6 +1,7 @@
-import { Fade, CircularProgress, makeStyles, Backdrop } from '@material-ui/core'
+import { Fade, CircularProgress, Backdrop } from '@material-ui/core'
 import React, { useState, useEffect, useContext, createContext, FunctionComponent } from 'react'
 import { v4 as uuid } from 'uuid'
+import { useBackdropStyles } from '../styles'
 
 
 const useProvideLoading = () => {
@@ -42,15 +43,8 @@ interface ILoadingContext {
 }
 const LoadingContext = createContext<ILoadingContext | null>(null)
 
-const useStyles = makeStyles((theme) => ({
-    backdrop: {
-        zIndex: theme.zIndex.drawer + 1,
-        color: theme.palette.primary.main,
-    },
-}))
-
 export const LoadingProvider: FunctionComponent = ({ children }) => {
-    const classes = useStyles()
+    const classes = useBackdropStyles()
 
     const loadingState = useProvideLoading()
     const { loading } = loadingState

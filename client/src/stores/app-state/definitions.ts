@@ -1,11 +1,10 @@
-import { CurrentUserQuery } from "../../graphql/autogenerate/operations";
 
 /* 
     State Object 
 */
 export interface IAppState {
-    jwt?: string
-    user?: CurrentUserQuery
+    bootstrapped?: boolean // Has the app been started up?
+    authed?: boolean
 }
 
 
@@ -13,30 +12,25 @@ export interface IAppState {
     Actions 
 */
 export enum AppActionType {
+    bootstrap,
+    login,
     logout,
-    setJwt,
-    setUser,
 }
 
 interface IPayloadLessAction {
-    type: AppActionType.logout
+    type:
+    AppActionType.login |
+    AppActionType.logout
 }
 
-interface ISetJwtAction {
-    type: AppActionType.setJwt
+interface IBootstrapAction {
+    type: AppActionType.bootstrap
     payload: {
-        jwt?: string
+        authed: boolean
     }
 }
 
-interface ISetUserAction {
-    type: AppActionType.setUser
-    payload: {
-        user?: CurrentUserQuery
-    }
-}
 
 export type AppAction =
     IPayloadLessAction |
-    ISetJwtAction |
-    ISetUserAction
+    IBootstrapAction
