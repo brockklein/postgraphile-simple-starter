@@ -33,6 +33,19 @@ export type CurrentUserQuery = (
   )> }
 );
 
+export type ForgotPasswordMutationVariables = Types.Exact<{
+  _email: Types.Scalars['String'];
+}>;
+
+
+export type ForgotPasswordMutation = (
+  { __typename?: 'Mutation' }
+  & { sendPasswordResetEmail?: Types.Maybe<(
+    { __typename?: 'SendPasswordResetEmailPayload' }
+    & Pick<Types.SendPasswordResetEmailPayload, 'clientMutationId'>
+  )> }
+);
+
 export type RegisterUserMutationVariables = Types.Exact<{
   firstName: Types.Scalars['String'];
   lastName: Types.Scalars['String'];
@@ -46,6 +59,21 @@ export type RegisterUserMutation = (
   & { registerUser?: Types.Maybe<(
     { __typename?: 'RegisterUserPayload' }
     & Pick<Types.RegisterUserPayload, 'jwtToken'>
+  )> }
+);
+
+export type ResetPasswordMutationVariables = Types.Exact<{
+  userId: Types.Scalars['UUID'];
+  resetToken: Types.Scalars['String'];
+  newPassword: Types.Scalars['String'];
+}>;
+
+
+export type ResetPasswordMutation = (
+  { __typename?: 'Mutation' }
+  & { resetPassword?: Types.Maybe<(
+    { __typename?: 'ResetPasswordPayload' }
+    & Pick<Types.ResetPasswordPayload, 'boolean'>
   )> }
 );
 

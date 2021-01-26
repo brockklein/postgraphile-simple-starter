@@ -1,7 +1,7 @@
 import { Button, Typography } from "@material-ui/core"
-import { useAuth } from "../hooks"
+import { useAuth } from "../../hooks"
 
-export const Dashboard = () => {
+export const Admin = () => {
     const { logout } = useAuth()
 
     return (

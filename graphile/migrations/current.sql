@@ -95,24 +95,29 @@ end;
 $$ language plpgsql;
 comment on function app_private.set_updated_at() is 'A simple helper function to set the udpated_at property of a row to the current timestamp. Primarily for use with triggers on pretty much every table.';
 
-
+drop table if exists app_private.user_account cascade;
 create table if not exists app_private.user_account (
-  id                     uuid not null default uuid_generate_v1mc(),
+  id                                      uuid not null default uuid_generate_v1mc(),
 
-  created_at             timestamp not null default now(),
-  updated_at             timestamp,
+  created_at                              timestamp not null default now(),
+  updated_at                              timestamp,
 
-  email                  text not null unique check (email ~* '^.+@.+\..+$'),
-  email_confirmed        boolean not null default false,
-  password_hash          text,
-  security_stamp         text,
-  concurrency_stamp      uuid not null default uuid_generate_v4(),
-  phone_number           character varying(50),
-  phone_number_confirmed boolean not null default false,
-  two_factor_enabled     boolean not null default false,
-  lockout_end            timestamp without time zone,
-  lockout_enabled        boolean not null default false,
-  access_failed_count    smallint not null default 0,
+  email                                   text not null unique check (email ~* '^.+@.+\..+$'),
+  email_confirmed                         boolean not null default false,
+  password_hash                           text,
+  security_stamp                          text,
+  concurrency_stamp                       uuid not null default uuid_generate_v4(),
+  phone_number                            character varying(50),
+  phone_number_confirmed                  boolean not null default false,
+  two_factor_enabled                      boolean not null default false,
+  lockout_end                             timestamp without time zone,
+  lockout_enabled                         boolean not null default false,
+  access_failed_count                     smallint not null default 0,
+  password_reset_email_sent_at            timestamp with time zone,
+  reset_password_token                    text,
+  reset_password_token_generated          timestamp with time zone,
+  failed_reset_password_attempts          integer DEFAULT 0 NOT NULL,
+  first_failed_reset_password_attempt     timestamp with time zone,
 
   -- Keys
   constraint user_account_pkey primary key (id),
@@ -271,8 +276,7 @@ create function app_private.refresh_token() returns app_public.jwt_token as $$
 declare
   account app_public.user_profile;
 begin
-  select a.* into account
-  from app_public.current_user() as a;
+  select a.* into account from app_public.current_user() as a;
 
   if account is not null then
     return (
@@ -345,6 +349,119 @@ comment on function app_public.current_user() is 'Gets the user who was identifi
 grant execute on function app_public.current_user() to app_anonymous, app_user;
 
 
+drop function if exists app_public.send_password_reset_email cascade;
+create function app_public.send_password_reset_email(_email text) returns void as $$
+declare
+  v_account app_private.user_account;
+  v_token text;
+  v_token_min_duration_between_emails interval = interval '3 minutes';
+  v_token_max_duration interval = interval '3 days';
+  v_now timestamptz = clock_timestamp();
+  v_latest_attempt timestamptz;
+begin
+  select * into v_account from app_private.user_account where app_private.user_account.email = _email;
+  
+  if v_account.id is not null then
+    -- See if we've sent a password reset within our email sending window.
+    if v_account.password_reset_email_sent_at is not null and v_account.password_reset_email_sent_at > v_now - v_token_min_duration_between_emails then
+      raise exception 'A password reset email has been requested too recently for this email address: %. Please wait a few minutes then try again.', _email using errcode = 'NOACT';
+      return;
+    end if;
+
+    -- Fetch or generate reset token:
+    update app_private.user_account
+    set
+      reset_password_token = (
+        case
+        when reset_password_token is null or reset_password_token_generated < v_now - v_token_max_duration
+        then encode(gen_random_bytes(7), 'hex')
+        else reset_password_token
+        end
+      ),
+      reset_password_token_generated = (
+        case
+        when reset_password_token is null or reset_password_token_generated < v_now - v_token_max_duration
+        then v_now
+        else reset_password_token_generated
+        end
+      )
+    where app_private.user_account.id = v_account.id returning reset_password_token into v_token;
+
+    -- Don't allow spamming an email:
+    update app_private.user_account
+    set password_reset_email_sent_at = v_now
+    where app_private.user_account.id = v_account.id;
+
+    perform graphile_worker.add_job('sendForgotPasswordEmail', json_build_object('userId', v_account.id, 'email', v_account.email, 'token', v_token));
+  else
+    raise exception 'No account exists with this email address: %', _email using errcode = 'NOACT';
+  end if;
+end;
+$$ language plpgsql strict security definer;
+
+grant execute on function app_public.send_password_reset_email(text) to app_anonymous, app_user;
 
 
+drop function if exists app_public.reset_password cascade;
+create function app_public.reset_password(user_id uuid, reset_token text, new_password text) returns boolean as $$
+declare
+  v_account app_private.user_account;
+  v_token_max_duration interval = interval '3 days';
+begin
+  select * into v_account from app_private.user_account where app_private.user_account.id = user_id;
 
+  if v_account.id is null then
+    raise exception 'No valid resets active with this reset token: %', reset_token using errcode = 'NOACT';
+  end if;
+
+  -- Have there been too many reset attempts?
+  if (
+    v_account.first_failed_reset_password_attempt is not null
+    and v_account.first_failed_reset_password_attempt > NOW() - v_token_max_duration
+    and v_account.failed_reset_password_attempts >= 20
+  ) 
+  then
+    raise exception 'Password reset locked - too many reset attempts. Please contact support@legitapps.com.' using errcode = 'LOCKD';
+  end if;
+
+  -- Not too many reset attempts, let's check the token
+  if v_account.reset_password_token != reset_token then
+    -- Wrong token, bump all the attempt tracking figures
+    update app_private.user_account
+    set
+      failed_reset_password_attempts = (case when first_failed_reset_password_attempt is null or first_failed_reset_password_attempt < now() - v_token_max_duration then 1 else failed_reset_password_attempts + 1 end),
+      first_failed_reset_password_attempt = (case when first_failed_reset_password_attempt is null or first_failed_reset_password_attempt < now() - v_token_max_duration then now() else first_failed_reset_password_attempt end)
+    where app_private.user_account.id = v_account.id;
+
+    return null;
+  end if;
+
+  -- Excellent - they're legit
+
+  perform app_private.assert_valid_password(new_password);
+
+  -- Let's reset the password as requested
+  update app_private.user_account
+  set
+    password_hash = crypt(new_password, gen_salt('bf')),
+    reset_password_token = null,
+    reset_password_token_generated = null,
+    failed_reset_password_attempts = 0,
+    first_failed_reset_password_attempt = null
+  where app_private.user_account.id = v_account.id;
+  
+  -- perform graphile_worker.add_job(
+  --   'user__audit',
+  --   json_build_object(
+  --     'type', 'reset_password',
+  --     'user_id', v_user.id,
+  --     'current_user_id', app_public.current_user_id()
+  --   )
+  -- );
+
+  return true;
+    
+end;
+$$ language plpgsql strict security definer;
+
+grant execute on function app_public.reset_password(uuid, text, text) to app_anonymous, app_user;

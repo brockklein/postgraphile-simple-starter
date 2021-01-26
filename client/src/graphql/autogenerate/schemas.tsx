@@ -80,17 +80,25 @@ export type UserProfile = Node & {
 export type Mutation = {
   __typename?: 'Mutation';
   /** Updates a single `UserProfile` using its globally unique id and a patch. */
-  updateUserProfile?: Maybe<UpdateUserProfilePayload>;
+  updateUserProfileByNodeId?: Maybe<UpdateUserProfilePayload>;
   /** Updates a single `UserProfile` using a unique key and a patch. */
-  updateUserProfileByUserId?: Maybe<UpdateUserProfilePayload>;
+  updateUserProfile?: Maybe<UpdateUserProfilePayload>;
   /** Deletes a single `UserProfile` using its globally unique id. */
-  deleteUserProfile?: Maybe<DeleteUserProfilePayload>;
+  deleteUserProfileByNodeId?: Maybe<DeleteUserProfilePayload>;
   /** Deletes a single `UserProfile` using a unique key. */
-  deleteUserProfileByUserId?: Maybe<DeleteUserProfilePayload>;
+  deleteUserProfile?: Maybe<DeleteUserProfilePayload>;
   /** Creates a JWT token that will securely identify a user and give them certain permissions. This token expires in 5 days. */
   authenticate?: Maybe<AuthenticatePayload>;
   /** Registers a single user creating their profile (user_profile) and an account (user_account). */
   registerUser?: Maybe<RegisterUserPayload>;
+  resetPassword?: Maybe<ResetPasswordPayload>;
+  sendPasswordResetEmail?: Maybe<SendPasswordResetEmailPayload>;
+};
+
+
+/** The root mutation type which contains root level fields which mutate data. */
+export type MutationUpdateUserProfileByNodeIdArgs = {
+  input: UpdateUserProfileByNodeIdInput;
 };
 
 
@@ -101,20 +109,14 @@ export type MutationUpdateUserProfileArgs = {
 
 
 /** The root mutation type which contains root level fields which mutate data. */
-export type MutationUpdateUserProfileByUserIdArgs = {
-  input: UpdateUserProfileByUserIdInput;
+export type MutationDeleteUserProfileByNodeIdArgs = {
+  input: DeleteUserProfileByNodeIdInput;
 };
 
 
 /** The root mutation type which contains root level fields which mutate data. */
 export type MutationDeleteUserProfileArgs = {
   input: DeleteUserProfileInput;
-};
-
-
-/** The root mutation type which contains root level fields which mutate data. */
-export type MutationDeleteUserProfileByUserIdArgs = {
-  input: DeleteUserProfileByUserIdInput;
 };
 
 
@@ -127,6 +129,18 @@ export type MutationAuthenticateArgs = {
 /** The root mutation type which contains root level fields which mutate data. */
 export type MutationRegisterUserArgs = {
   input: RegisterUserInput;
+};
+
+
+/** The root mutation type which contains root level fields which mutate data. */
+export type MutationResetPasswordArgs = {
+  input: ResetPasswordInput;
+};
+
+
+/** The root mutation type which contains root level fields which mutate data. */
+export type MutationSendPasswordResetEmailArgs = {
+  input: SendPasswordResetEmailInput;
 };
 
 /** The output of our update `UserProfile` mutation. */
@@ -143,8 +157,8 @@ export type UpdateUserProfilePayload = {
   query?: Maybe<Query>;
 };
 
-/** All input for the `updateUserProfile` mutation. */
-export type UpdateUserProfileInput = {
+/** All input for the `updateUserProfileByNodeId` mutation. */
+export type UpdateUserProfileByNodeIdInput = {
   /**
    * An arbitrary string value with no semantic meaning. Will be included in the
    * payload verbatim. May be used to track mutations by the client.
@@ -153,7 +167,7 @@ export type UpdateUserProfileInput = {
   /** The globally unique `ID` which will identify a single `UserProfile` to be updated. */
   nodeId: Scalars['ID'];
   /** An object where the defined keys will be set on the `UserProfile` being updated. */
-  userProfilePatch: UserProfilePatch;
+  patch: UserProfilePatch;
 };
 
 /** Represents an update to a `UserProfile`. Fields that are set will be updated. */
@@ -170,15 +184,15 @@ export type UserProfilePatch = {
   lastName?: Maybe<Scalars['String']>;
 };
 
-/** All input for the `updateUserProfileByUserId` mutation. */
-export type UpdateUserProfileByUserIdInput = {
+/** All input for the `updateUserProfile` mutation. */
+export type UpdateUserProfileInput = {
   /**
    * An arbitrary string value with no semantic meaning. Will be included in the
    * payload verbatim. May be used to track mutations by the client.
    */
   clientMutationId?: Maybe<Scalars['String']>;
   /** An object where the defined keys will be set on the `UserProfile` being updated. */
-  userProfilePatch: UserProfilePatch;
+  patch: UserProfilePatch;
   /** A foreign key reference to the user's `user_id` in their `user_account` record. */
   userId: Scalars['UUID'];
 };
@@ -193,13 +207,13 @@ export type DeleteUserProfilePayload = {
   clientMutationId?: Maybe<Scalars['String']>;
   /** The `UserProfile` that was deleted by this mutation. */
   userProfile?: Maybe<UserProfile>;
-  deletedUserProfileId?: Maybe<Scalars['ID']>;
+  deletedUserProfileNodeId?: Maybe<Scalars['ID']>;
   /** Our root query field type. Allows us to run any query from our mutation payload. */
   query?: Maybe<Query>;
 };
 
-/** All input for the `deleteUserProfile` mutation. */
-export type DeleteUserProfileInput = {
+/** All input for the `deleteUserProfileByNodeId` mutation. */
+export type DeleteUserProfileByNodeIdInput = {
   /**
    * An arbitrary string value with no semantic meaning. Will be included in the
    * payload verbatim. May be used to track mutations by the client.
@@ -209,8 +223,8 @@ export type DeleteUserProfileInput = {
   nodeId: Scalars['ID'];
 };
 
-/** All input for the `deleteUserProfileByUserId` mutation. */
-export type DeleteUserProfileByUserIdInput = {
+/** All input for the `deleteUserProfile` mutation. */
+export type DeleteUserProfileInput = {
   /**
    * An arbitrary string value with no semantic meaning. Will be included in the
    * payload verbatim. May be used to track mutations by the client.
@@ -269,4 +283,51 @@ export type RegisterUserInput = {
   lastName: Scalars['String'];
   _email: Scalars['String'];
   password: Scalars['String'];
+};
+
+/** The output of our `resetPassword` mutation. */
+export type ResetPasswordPayload = {
+  __typename?: 'ResetPasswordPayload';
+  /**
+   * The exact same `clientMutationId` that was provided in the mutation input,
+   * unchanged and unused. May be used by a client to track mutations.
+   */
+  clientMutationId?: Maybe<Scalars['String']>;
+  boolean?: Maybe<Scalars['Boolean']>;
+  /** Our root query field type. Allows us to run any query from our mutation payload. */
+  query?: Maybe<Query>;
+};
+
+/** All input for the `resetPassword` mutation. */
+export type ResetPasswordInput = {
+  /**
+   * An arbitrary string value with no semantic meaning. Will be included in the
+   * payload verbatim. May be used to track mutations by the client.
+   */
+  clientMutationId?: Maybe<Scalars['String']>;
+  userId: Scalars['UUID'];
+  resetToken: Scalars['String'];
+  newPassword: Scalars['String'];
+};
+
+/** The output of our `sendPasswordResetEmail` mutation. */
+export type SendPasswordResetEmailPayload = {
+  __typename?: 'SendPasswordResetEmailPayload';
+  /**
+   * The exact same `clientMutationId` that was provided in the mutation input,
+   * unchanged and unused. May be used by a client to track mutations.
+   */
+  clientMutationId?: Maybe<Scalars['String']>;
+  /** Our root query field type. Allows us to run any query from our mutation payload. */
+  query?: Maybe<Query>;
+};
+
+/** All input for the `sendPasswordResetEmail` mutation. */
+export type SendPasswordResetEmailInput = {
+  /**
+   * An arbitrary string value with no semantic meaning. Will be included in the
+   * payload verbatim. May be used to track mutations by the client.
+   */
+  clientMutationId?: Maybe<Scalars['String']>;
+  _email: Scalars['String'];
 };

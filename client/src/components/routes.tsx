@@ -1,9 +1,11 @@
-import { ReactNode } from 'react';
-import { Switch, Route, BrowserRouter, Redirect } from 'react-router-dom';
-import { useAppState } from '../hooks';
-import { Login } from './login';
-import { Signup } from './signup';
-import { Dashboard } from './dashboard'
+import { ReactNode } from 'react'
+import { Switch, Route, BrowserRouter, Redirect } from 'react-router-dom'
+import { useAppState } from '../hooks'
+import { Login } from './login'
+import { Signup } from './signup'
+import { Admin } from './admin/admin'
+import { ForgotPassword } from './forgot-password'
+import { ResetPassword } from './reset-password'
 
 export const Routes = () => {
   return (
@@ -11,8 +13,10 @@ export const Routes = () => {
       <Switch>
         <RedirectIfAuthed path='/login' children={<Login />} />
         <RedirectIfAuthed path='/signup' children={<Signup />} />
+        <RedirectIfAuthed path='/forgot-password' children={<ForgotPassword />} />
+        <RedirectIfAuthed path='/reset-password' children={<ResetPassword />} />
 
-        <PrivateRoute path='/' children={<Dashboard />} />
+        <PrivateRoute path='/' children={<Admin />} />
       </Switch>
     </BrowserRouter>
   )

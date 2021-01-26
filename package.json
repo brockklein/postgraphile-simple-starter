@@ -1,0 +1,26 @@
+{
+  "name": "postgraphile-simple-starter",
+  "version": "1.0.0",
+  "description": "Check out the `graphile` folder for installing dependencies and starting up the Postgraphile GraphQL service.",
+  "main": "index.js",
+  "scripts": {
+    "server": "cd graphile && npm run dev",
+    "codegen": "cd codegen && npm run codegen",
+    "client": "cd client && npm run start",
+    "dev": "concurrently \"npm:server\" \"npm:codegen\" \"npm:client\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brockklein/postgraphile-simple-starter.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/brockklein/postgraphile-simple-starter/issues"
+  },
+  "homepage": "https://github.com/brockklein/postgraphile-simple-starter#readme",
+  "devDependencies": {
+    "concurrently": "^5.3.0"
+  }
+}

@@ -3,10 +3,13 @@ import { Container } from '@material-ui/core'
 import React from 'react'
 import { ComposeProviders, SnackbarProvider, ApolloProvider, ThemeProvider, AppStateProvider, AlertsProvider, AuthProvider, LoadingProvider } from './providers'
 import { Bootstrap } from './bootstrap'
+import { useCommonStyles } from '../styles'
 
 export const App = () => {
+  const commonStyles = useCommonStyles()
+
   return (
-    <Container style={{ display: 'flex', justifyContent: 'center', alignContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+    <Container className={commonStyles.rootTypography} style={{ display: 'flex', justifyContent: 'center', alignContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
       <ComposeProviders
         providers={[
           AppStateProvider,

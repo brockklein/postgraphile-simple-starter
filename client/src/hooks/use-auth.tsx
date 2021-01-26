@@ -1,7 +1,7 @@
 import { useSnackbar } from 'notistack'
 import React, { useEffect, useContext, createContext, FunctionComponent } from 'react'
 import { useAppState, useLoadingOverlay } from '.'
-import { useAuthenticateMutation, useRegisterUserMutation } from '../graphql/autogenerate/hooks'
+import { useAuthenticateMutation, useRegisterUserMutation, useForgotPasswordMutation, useResetPasswordMutation } from '../graphql/autogenerate/hooks'
 import { AppActionType } from '../stores/app-state'
 import { setAccessToken } from './apollo/token'
 
@@ -15,9 +15,17 @@ interface ISignup extends IAuthCredentials {
     lastName: string
 }
 
+interface IResetPassword {
+    userId: string
+    token: string
+    password: string
+}
+
 interface IAuthContext {
     signup: (args: ISignup) => void
     login: (args: IAuthCredentials) => void
+    forgotPassword: (args: Pick<IAuthCredentials, 'email'>) => void
+    resetPassword: (args: IResetPassword) => Promise<void>
     logout: () => void
 }
 const AuthContext = createContext<IAuthContext | undefined>(undefined)
@@ -38,29 +46,28 @@ export const AuthProvider: FunctionComponent = ({ children }) => {
     /* 
         Signup
     */
-    const [registerUser, registerUserStatus] = useRegisterUserMutation()
+    const [ registerUser, registerUserStatus ] = useRegisterUserMutation()
     useLoadingOverlay(registerUserStatus.loading)
 
     useEffect(() => {
         if (registerUserStatus.error) enqueueSnackbar(`${registerUserStatus.error.name} - ${registerUserStatus.error.message}`, { variant: 'error', preventDuplicate: false })
 
-        if (registerUserStatus.data?.registerUser?.jwtToken) {
-            console.log('was this called? huh...', registerUserStatus.data?.registerUser?.jwtToken)
+        if (registerUserStatus.data?.registerUser?.jwtToken)
+        {
             setAccessToken(registerUserStatus.data.registerUser.jwtToken)
             enqueueSnackbar('Account created. Welcome!', { variant: 'success' })
             dispatch({ type: AppActionType.login })
         }
-    }, [registerUserStatus.error, registerUserStatus.data])
+    }, [ registerUserStatus.error, registerUserStatus.data ])
 
     const signup = (variables: ISignup) => {
-        console.log('was signup called?')
         registerUser({ variables: { ...variables, _email: variables.email } }).catch()
     }
 
     /* 
         Login
     */
-    const [authenticate, authenticateStatus] = useAuthenticateMutation()
+    const [ authenticate, authenticateStatus ] = useAuthenticateMutation()
     useLoadingOverlay(authenticateStatus.loading)
 
     useEffect(() => {
@@ -71,7 +78,8 @@ export const AuthProvider: FunctionComponent = ({ children }) => {
         /* 
             A null jwtToken means the authentication failed for any reason (wrong password, account doesn't exist)
         */
-        if (data && data.authenticate?.jwtToken === null) {
+        if (data && data.authenticate?.jwtToken === null)
+        {
             enqueueSnackbar(
                 <div>
                     Login failed. <span>Email and password do not match, or an account does not exist with the provided email address.</span>
@@ -83,11 +91,12 @@ export const AuthProvider: FunctionComponent = ({ children }) => {
             )
         }
 
-        if (data && data.authenticate?.jwtToken) {
+        if (data && data.authenticate?.jwtToken)
+        {
             setAccessToken(data.authenticate.jwtToken)
             dispatch({ type: AppActionType.login })
         }
-    }, [authenticateStatus.error, authenticateStatus.data])
+    }, [ authenticateStatus.error, authenticateStatus.data ])
 
     const login = (variables: IAuthCredentials) => authenticate({ variables }).catch()
 
@@ -99,7 +108,46 @@ export const AuthProvider: FunctionComponent = ({ children }) => {
         dispatch({ type: AppActionType.logout })
     }
 
+    /* 
+        Forgot Password
+    */
+    const [ forgotPasswordQuery, forgotPasswordQueryStatus ] = useForgotPasswordMutation()
+    useLoadingOverlay(forgotPasswordQueryStatus.loading)
 
-    return <AuthContext.Provider value={{ logout, login, signup }} children={children} />
+    const forgotPassword = async ({ email }: Pick<IAuthCredentials, 'email'>) => {
+        await forgotPasswordQuery({ variables: { _email: email } }).catch()
+        enqueueSnackbar('Successfully sent password reset email.', { variant: 'success', preventDuplicate: false })
+    }
+
+    useEffect(() => {
+        const { error } = forgotPasswordQueryStatus
+
+        if (error) enqueueSnackbar(error.message, { variant: 'error', preventDuplicate: false })
+    }, [ forgotPasswordQueryStatus.error, forgotPasswordQueryStatus.data ])
+
+
+    /* 
+        Reset Password
+    */
+    const [ resetPasswordQuery, resetPasswordQueryStatus ] = useResetPasswordMutation()
+    useLoadingOverlay(resetPasswordQueryStatus.loading)
+
+    const resetPassword = async ({ token, password, userId }: IResetPassword) => {
+        const results = await resetPasswordQuery({ variables: { resetToken: token, newPassword: password, userId } }).catch()
+
+        if (results.data?.resetPassword)
+        {
+            enqueueSnackbar('Password successfully reset.', { variant: 'success', preventDuplicate: false })
+        }
+    }
+
+    useEffect(() => {
+        const { error } = resetPasswordQueryStatus
+
+        if (error) enqueueSnackbar(error.message, { variant: 'error', preventDuplicate: false })
+    }, [ resetPasswordQueryStatus.error, resetPasswordQueryStatus.data ])
+
+
+    return <AuthContext.Provider value={{ logout, login, signup, forgotPassword, resetPassword }} children={children} />
 }
 

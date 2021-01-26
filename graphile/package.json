@@ -3,8 +3,10 @@
   "version": "0.0.0",
   "description": "",
   "scripts": {
-    "graphile": "postgraphile --connection postgres://app_postgraphile:zqDHRFx5fEYMbkq@localhost:5433/eventcast --schema app_public --cors --export-schema-graphql schema.graphql --default-role app_anonymous --jwt-secret development --jwt-token-identifier app_public.jwt_token --subscriptions --watch --owner-connection postgres://postgres:postgres@localhost:5433/postgres --dynamic-json --no-setof-functions-contain-nulls --no-ignore-rbac --no-ignore-indexes --show-error-stack=json --extended-errors hint,detail,errcode --append-plugins @graphile-contrib/pg-simplify-inflector --append-plugins @graphile-contrib/pg-many-to-many --export-schema-graphql schema.graphql --graphiql '/' --enhance-graphiql --allow-explain --enable-query-batching --legacy-relations omit",
-    "migrate": "graphile-migrate watch"
+    "migrate": "graphile-migrate watch",
+    "start:dev": "nodemon --config nodemon.json src/index.ts",
+    "build:dev": "tsc",
+    "dev": "concurrently \"npm:start:dev\" \"npm:migrate\""
   },
   "keywords": [],
   "author": "",
@@ -12,7 +14,28 @@
   "dependencies": {
     "@graphile-contrib/pg-many-to-many": "^1.0.0",
     "@graphile-contrib/pg-simplify-inflector": "^6.1.0",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
     "graphile-migrate": "^1.0.2",
-    "postgraphile": "^4.10.0"
+    "graphile-worker": "^0.8.1",
+    "html-to-text": "^6.0.0",
+    "nodemailer": "^6.4.17",
+    "postgraphile": "^4.10.0",
+    "runtypes": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.11",
+    "@types/html-to-text": "^6.0.0",
+    "@types/node": "^14.14.22",
+    "@types/nodemailer": "^6.4.0",
+    "@typescript-eslint/eslint-plugin": "^4.14.0",
+    "@typescript-eslint/parser": "^4.14.0",
+    "concurrently": "^5.3.0",
+    "eslint": "^7.18.0",
+    "eslint-config-airbnb-base": "^14.2.1",
+    "eslint-plugin-import": "^2.22.1",
+    "nodemon": "^2.0.7",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.1.3"
   }
 }
